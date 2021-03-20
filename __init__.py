@@ -1,0 +1,6 @@
+__author__ = "tginfo.me team"
+__copyright__ = "Copyright 2021, tginfo.me"
+__license__ = "GPLV3+"
+__version__ = "4.4.2"
+__maintainer__ = "tginfo.me"
+__status__ = "Production"

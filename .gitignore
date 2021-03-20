@@ -1,0 +1,9 @@
+/translate_bot.session
+/venv/
+/.idea/
+/translate_bot.session-journal
+/plugins/config/debugconfig.py
+debugenv.list
+__pycache__
+/downloads/
+/mongodb/

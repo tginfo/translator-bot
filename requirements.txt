@@ -1,0 +1,8 @@
+pyrogram # Needed for the bot itself
+tgcrypto # Needed to make pyrogram faster
+gpytranslate # Translate using Google
+httpx # Needed to use Microsoft Translate API for ku language
+python-dotenv # Needed to dynamically load env variables from a file
+motor # Async MongoDB client library using AsyncIO
+dnspython # For DB_URIs starting with mongodb+srv
+pydantic # Like a dataclass but better
