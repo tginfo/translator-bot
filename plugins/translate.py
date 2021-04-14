@@ -1,6 +1,7 @@
 import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import MediaCaptionTooLong
 
 from .config import config
 from .database import languages
@@ -89,8 +90,9 @@ async def translate(bot: Client, msg: Message):
                 )
         except AttributeError:
             continue
+        to_await = None
         if msg.text:
-            await bot.send_message(
+            to_await = bot.send_message(
                 chat_id=_edit,
                 text=translation,
                 parse_mode="html",
@@ -99,7 +101,7 @@ async def translate(bot: Client, msg: Message):
             )
         elif msg.media:
             if msg.photo:
-                await bot.send_photo(
+                to_await = bot.send_photo(
                     chat_id=_edit,
                     photo=msg.photo.file_id,
                     caption=translation,
@@ -107,7 +109,7 @@ async def translate(bot: Client, msg: Message):
                     reply_markup=reply_markup,
                 )
             elif msg.video:
-                await bot.send_video(
+                to_await = bot.send_video(
                     chat_id=_edit,
                     video=msg.video.file_id,
                     caption=translation,
@@ -115,7 +117,7 @@ async def translate(bot: Client, msg: Message):
                     reply_markup=reply_markup,
                 )
             elif msg.animation:
-                await bot.send_animation(
+                to_await = bot.send_animation(
                     chat_id=_edit,
                     animation=msg.animation.file_id,
                     caption=translation,
@@ -123,16 +125,31 @@ async def translate(bot: Client, msg: Message):
                     reply_markup=reply_markup,
                 )
             elif msg.sticker:
-                await bot.send_sticker(
+                to_await = bot.send_sticker(
                     chat_id=_edit,
                     sticker=msg.sticker.file_id,
                     reply_markup=reply_markup,
                 )
             elif msg.audio:
-                await bot.send_audio(
+                to_await = bot.send_audio(
                     chat_id=_edit,
                     audio=msg.audio.file_id,
                     caption=translation,
                     parse_mode="html",
                     reply_markup=reply_markup,
                 )
+        try:
+            await to_await
+        except MediaCaptionTooLong:
+            try:
+                await bot.send_message(
+                    chat_id=_edit,
+                    text=translation,
+                    parse_mode="html",
+                    disable_web_page_preview=not bool(msg.web_page),
+                    reply_markup=reply_markup,
+                )
+            except:
+                continue
+        except:
+            continue
