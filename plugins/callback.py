@@ -101,7 +101,7 @@ async def callback(bot: Client, query: CallbackQuery):
                         chat_id=chat_id,
                         message_id=message_id[0],
                         media=InputMediaAnimation(
-                            media=query.message.photo.file_id,
+                            media=query.message.animation.file_id,
                             caption=caption,
                             parse_mode="html",
                         ),
