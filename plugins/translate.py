@@ -87,6 +87,8 @@ async def translate(bot: Client, msg: Message):
                     )
                     .text.replace("> ", ">")
                     .replace("# ", "#")
+                    .replace(" < / a>", "</a>")
+                    .replace("< / a>", "</a>")
                 )
         except AttributeError:
             continue
