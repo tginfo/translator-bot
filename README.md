@@ -51,7 +51,7 @@ $ docker run --name translator --env-file env.list translator
 ```
 $ docker pull mongo
 $ cd path/to/translation-bot
-$ docker run --rm --name mongo -p 172.17.0.1:27017:27017 -e MONGO_INITDB_ROOT_USERNAME=docker -e MONGO_INITDB_ROOT_PASSWORD=admin -v $(pwd)/mongodb:/data/db mongo
+$ docker run --rm --name mongo -p 0.0.0.0:27017:27017 -e MONGO_INITDB_ROOT_USERNAME=docker -e MONGO_INITDB_ROOT_PASSWORD=admin -v $(pwd)/mongodb:/data/db mongo
 ```
 ❓ **If you use MongoDB with Docker, you should use** `mongodb://docker:admin@172.17.0.1:27017` **as DB_URI.**
 
