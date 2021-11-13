@@ -1,3 +1,4 @@
+import html
 import json
 import os
 from io import BytesIO
@@ -112,6 +113,34 @@ async def export_link(bot: Client, msg: Message):
     try:
         link = await msg.chat.export_invite_link()
         await msg.reply_text(link)
+    except RPCError as e:
+        await msg.reply_text(
+            "Something went wrong.\n"
+            + f"<code>{type(e).__name__}:{f' {type(e)}'.strip() or ''} {e}</code>"
+        )
+
+
+@Client.on_message(filters.command(["list", "show"]) & sudoers)
+async def show_translators(bot: Client, msg: Message):
+    if len(msg.text.split()) < 2:
+        return await msg.reply_text("Provide a language code please. Example: <code>/list en</code>")
+    try:
+        language = msg.text.split()[1]
+        langs = await languages.get_languages()
+        try:
+            ids = next(lang for lang in langs if lang["language"] == language)["translators"]
+            if not ids:
+                raise StopIteration()
+            translators = await bot.get_users(ids)
+            return await msg.reply_text(
+                f"Translators of <code>'{html.escape(language)}'</code> language:\n"
+                + "\n".join(
+                    f" - {translator.mention}"
+                    for translator in translators
+                )
+            )
+        except StopIteration:
+            return await msg.reply_text("No translators found for this language.")
     except RPCError as e:
         await msg.reply_text(
             "Something went wrong.\n"
