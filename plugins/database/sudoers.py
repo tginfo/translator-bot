@@ -9,6 +9,10 @@ c = db[0].client["translation_bot"]["sudoers"]
 """
 
 
+async def drop():
+    await c.drop()
+
+
 async def add_sudoer(user_id: int) -> bool:
     if await is_sudoer(user_id):
         return False

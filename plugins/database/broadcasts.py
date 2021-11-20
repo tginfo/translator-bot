@@ -9,6 +9,10 @@ c = db[0].client["translation_bot"]["broadcasts"]
 """
 
 
+async def drop():
+    await c.drop()
+
+
 async def add_chat(chat_id: int) -> bool:
     if await get_chat(chat_id=chat_id):
         return False

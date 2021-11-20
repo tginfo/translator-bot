@@ -15,6 +15,10 @@ c = db[0].client["translation_bot"]["languages"]
 """
 
 
+async def drop():
+    await c.drop()
+
+
 async def update_language(
     language: str,
     main: int,

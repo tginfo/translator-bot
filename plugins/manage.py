@@ -3,7 +3,7 @@ import html
 import json
 import os
 from io import BytesIO
-from typing import Callable, Iterable
+from typing import Callable
 
 from pyrogram import Client, filters
 from pyrogram.errors import RPCError
@@ -90,8 +90,10 @@ async def import_database(bot: Client, query: CallbackQuery):
                 _db["sudoers"],
                 _db["broadcasts"],
             )
-            db[0].client.drop_database("translation_bot")
-            await asyncio.sleep(4)
+            await languages.drop()
+            await sudoers_.drop()
+            await broadcasts.drop()
+            await asyncio.sleep(3)
             for lang in _languages:
                 lang["from_"] = lang["from"]
                 del lang["from"]
