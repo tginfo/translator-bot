@@ -1,3 +1,4 @@
+import asyncio
 import html
 import json
 import os
@@ -90,6 +91,7 @@ async def import_database(bot: Client, query: CallbackQuery):
                 _db["broadcasts"],
             )
             db[0].client.drop_database("translation_bot")
+            await asyncio.sleep(4)
             for lang in _languages:
                 lang["from_"] = lang["from"]
                 del lang["from"]
