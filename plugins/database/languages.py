@@ -26,6 +26,7 @@ async def update_language(
     edit: int,
     from_: List[Union[str, int]] = [-1001263222189, -1001253459535, -1001335406586],
     translators: List[int] = [],
+    targetlang: str = "",
     microsoft: bool = False,
 ) -> bool:
     await c.update_one(
@@ -37,6 +38,7 @@ async def update_language(
                 "beta": beta,
                 "edit": edit,
                 "translators": translators,
+                "targetlang": targetlang,
                 "microsoft": microsoft,
             }
         },

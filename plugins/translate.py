@@ -81,7 +81,7 @@ async def translate(bot: Client, msg: Message):
                     else (
                         await config["tr"](
                             text,
-                            targetlang=language["language"],
+                            targetlang=language["targetlang"] or language["language"],
                             sourcelang="auto" if _from != -1001263222189 else "en",
                         )
                     )

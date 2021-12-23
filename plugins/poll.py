@@ -35,7 +35,7 @@ async def poll(bot: Client, msg: Message):
                 else (
                     await config["tr"](
                         f"{msg.poll.question}\n{options}",
-                        targetlang=language["language"],
+                        targetlang=language["targetlang"] or language["language"],
                     )
                 ).text
             )
