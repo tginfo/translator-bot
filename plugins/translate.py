@@ -70,26 +70,29 @@ async def translate(bot: Client, msg: Message):
         )
         try:
             if text:
-                translation = (
-                    await ms_translate(
-                        text=text,
-                        lang_code=language["language"],
-                        api_key=config["ms_api_key"],
-                    )
-                    if language["microsoft"]
-                    and config["ms_api_key"].strip().lower() != "empty"
-                    else (
-                        await config["tr"](
-                            text,
-                            targetlang=language["targetlang"] or language["language"],
-                            sourcelang="auto" if _from != -1001263222189 else "en",
+                try:
+                    translation = (
+                        await ms_translate(
+                            text=text,
+                            lang_code=language["language"],
+                            api_key=config["ms_api_key"],
                         )
+                        if language["microsoft"]
+                        and config["ms_api_key"].strip().lower() != "empty"
+                        else (
+                            await config["tr"](
+                                text,
+                                targetlang=language["targetlang"] or language["language"],
+                                sourcelang="auto" if _from != -1001263222189 else "en",
+                            )
+                        )
+                        .text.replace("> ", ">")
+                        .replace("# ", "#")
+                        .replace(" < / a>", "</a>")
+                        .replace("< / a>", "</a>")
                     )
-                    .text.replace("> ", ">")
-                    .replace("# ", "#")
-                    .replace(" < / a>", "</a>")
-                    .replace("< / a>", "</a>")
-                )
+                except Exception:
+                    translation = text
         except AttributeError:
             continue
         to_await = None
