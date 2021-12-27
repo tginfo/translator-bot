@@ -12,31 +12,25 @@ from pyrogram import Client, idle
 from plugins.config import config
 from plugins.database import Database, db
 
-if os.path.isfile("env.list"):
-    dotenv.load_dotenv("env.list")
+dotenv.load_dotenv(".env")
 
 parser = argparse.ArgumentParser(
     description="A Telegram bot to help TGInfo editors translating their posts.",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 
-env_vars = (
-    "TOKEN",
-    "API_ID",
-    "API_HASH",
-    "MS_API_KEY",
-    "DB_URI",
-)
+env_vars = ("TOKEN", "API_ID", "API_HASH", "MS_API_KEY", "DB_URI", "HL_URL")
+
 (
     config["token"],
     config["api_id"],
     config["api_hash"],
     config["ms_api_key"],
     config["db_uri"],
+    config["hl_url"],
 ) = map(lambda _args: os.getenv(*_args), zip(env_vars, (None,) * len(env_vars)))
 
-parser.add_argument("--token", help="Bot token",
-                    required=not bool(config["token"]))
+parser.add_argument("--token", help="Bot token", required=not bool(config["token"]))
 parser.add_argument(
     "--api-id",
     help="Telegram api-id. You can get it  from my.telegram.org/apps",
@@ -49,10 +43,7 @@ parser.add_argument(
     required=not bool(config["api_hash"]),
 )
 parser.add_argument(
-    "--db-uri",
-    help="MongoDB URI",
-    required=not bool(config["db_uri"]),
-    type=str
+    "--db-uri", help="MongoDB URI", required=not bool(config["db_uri"]), type=str
 )
 parser.add_argument(
     "--ms-api-key",
@@ -68,6 +59,8 @@ parser.add_argument(
     type=int,
     required=False,
 )
+parser.add_argument("--hl-url", help="Helper base URL.", type=str, required=False)
+
 args = parser.parse_args()
 
 config["ms_api_key"] = args.ms_api_key or config["ms_api_key"]

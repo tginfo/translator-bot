@@ -7,4 +7,5 @@ config = {
     "ms_api_key": str,
     "db_uri": str,
     "tr": Translator,
+    "hl_url": str
 }

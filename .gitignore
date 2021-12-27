@@ -7,3 +7,4 @@ debugenv.list
 __pycache__
 /downloads/
 /mongodb/
+.env
