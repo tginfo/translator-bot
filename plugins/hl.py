@@ -11,9 +11,7 @@ from .config import config
 
 text = """
 1. Click the button below.
-2. A moment after clicking, you should be redirected back to Telegram.
-3. Once on Telegram, you will see me.
-4. Click the start button.
+2. Follow the instructions there.
 """
 
 
