@@ -37,7 +37,7 @@ async def hl(bot: Client, message: Message):
         await message.reply("Please pass your language code.")
         return
 
-    q = message.reply_to_message.text or message.reply_to_message.caption
+    q = (message.reply_to_message.text or message.reply_to_message.caption).html
     is_caption = message.reply_to_message.caption is not None
     message_id = message.reply_to_message.forward_from_message_id
 
