@@ -8,7 +8,7 @@ export default composer;
 
 const gtr = new GTR();
 
-const alt = -1253459535;
+const alt = -1001253459535;
 
 const tginfo = 1001003307527;
 const betainfo = -1001313913616;
