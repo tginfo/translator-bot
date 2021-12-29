@@ -65,8 +65,8 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
 
     const { message_id: messageId } = await ctx.copyMessage(language.edit, {
       reply_markup: new InlineKeyboard().text(
-        `Send to @${isBeta ? "beta" : "tg"}info${id}`,
-        `${isBeta ? "beta" : "tg"}_${id}`,
+        `Send to ${isBeta ? "Beta" : "Main"} Channel`,
+        `send_${isBeta ? "beta" : "tg"}}`,
       ).row().text("Idle", `idle_${id}`),
     });
 

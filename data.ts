@@ -1,6 +1,6 @@
 type Sudoer = number;
 
-interface Language {
+export interface Language {
   from: "en" | "ru";
   targetLang?: string;
   edit: number;
