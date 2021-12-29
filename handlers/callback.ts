@@ -1,5 +1,6 @@
 import { Composer } from "https://deno.land/x/grammy/mod.ts";
-import { languages } from "../database/mod.ts";
+import { answer, answerWithError } from "../utils.ts";
+import { languages } from "../data.ts";
 
 const composer = new Composer();
 
@@ -8,68 +9,60 @@ export default composer;
 const cq = composer.on("callback_query").filter((
   ctx,
 ): ctx is typeof ctx & {
-  callbackQuery: typeof ctx["callbackQuery"] & {
-    message: NonNullable<typeof ctx["callbackQuery"]["message"]> & {
-      reply_markup: NonNullable<
-        NonNullable<
-          typeof ctx["callbackQuery"]["message"]
-        >["reply_markup"]
-      >;
-    };
-  };
-} => !!ctx.callbackQuery.message && !!ctx.callbackQuery.message.reply_markup)
+  callbackQuery: NonNullable<
+    typeof ctx["callbackQuery"] & {
+      message: NonNullable<typeof ctx["callbackQuery"]["message"]> & {
+        reply_markup: NonNullable<
+          NonNullable<
+            typeof ctx["callbackQuery"]["message"]
+          >["reply_markup"]
+        >;
+      };
+    }
+  >;
+} => !!ctx.callbackQuery.message && !!ctx.callbackQuery.message.reply_markup);
 
 cq.callbackQuery(/^idle/, (ctx) => {
+  const inlineKeyboard = ctx.callbackQuery.message.reply_markup.inline_keyboard;
+
   if (ctx.callbackQuery.data != `idle_${ctx.from.id}`) {
+    inlineKeyboard[1][0] = {
+      text: `Idled by ${ctx.from.first_name}`,
+      callback_data: `idle_${ctx.from.id}`,
+    };
+
     return ctx.editMessageReplyMarkup({
       reply_markup: {
-        inline_keyboard: [
-          ...ctx.callbackQuery.message.reply_markup.inline_keyboard.slice(0, 2),
-          [
-            {
-              text: `Idled by ${ctx.from.first_name}`,
-              callback_data: `idle_${ctx.from.id}`,
-            },
-          ],
-        ],
+        inline_keyboard: inlineKeyboard,
       },
     });
   }
 
+  inlineKeyboard[1][0] = {
+    text: `Idle`,
+    callback_data: `idle`,
+  };
+
   return ctx.editMessageReplyMarkup({
     reply_markup: {
-      inline_keyboard: [
-        ...ctx.callbackQuery.message.reply_markup.inline_keyboard.slice(0, 2),
-        [
-          {
-            text: `Idle`,
-            callback_data: `idle`,
-          },
-        ],
-      ],
+      inline_keyboard: inlineKeyboard,
     },
   });
 });
 
 cq.callbackQuery(/^(?!idle)/, async (ctx) => {
-  const [channel, code, mid] = ctx.callbackQuery.data.split("_");
+  const [channel, id, mid] = ctx.callbackQuery.data.split("_");
   const isBeta = channel == "beta";
 
-  const language = await languages.get(code);
+  const language = languages[id];
 
   if (!language) {
-    await ctx.answerCallbackQuery({
-      text: "Language not found.",
-      show_alert: true,
-    });
+    await answer(ctx, "Language not found.");
     return;
   }
 
   if (!language.translators.includes(ctx.from.id)) {
-    await ctx.answerCallbackQuery({
-      text: "Action not allowed.",
-      show_alert: true,
-    });
+    await answer(ctx, "Action not allowed.");
     return;
   }
 
@@ -113,26 +106,20 @@ cq.callbackQuery(/^(?!idle)/, async (ctx) => {
         sentMessageId = message.message_id;
       }
     }
-  } catch (_err) {
-    //
+  } catch (err) {
+    await answerWithError(ctx, err);
   }
 
   if (!sentMessageId) {
     return;
   }
 
+  const inlineKeyboard = ctx.callbackQuery.message.reply_markup.inline_keyboard;
+
+  inlineKeyboard[0][0].text = inlineKeyboard[0][0]
+    .text.replace("Send to", "Edit in");
+
   await ctx.editMessageReplyMarkup({
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text:
-              ctx.callbackQuery.message.reply_markup.inline_keyboard[0][0].text,
-            callback_data: ctx.callbackQuery.data + "_" + sentMessageId,
-          },
-        ],
-        ...ctx.callbackQuery.message.reply_markup.inline_keyboard.slice(1),
-      ],
-    },
+    reply_markup: { inline_keyboard: inlineKeyboard },
   });
 });

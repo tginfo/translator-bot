@@ -1,6 +1,13 @@
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
 import { GTR } from "https://deno.land/x/gtr/mod.ts";
-import { languages } from "../database/mod.ts";
+import {
+  alt,
+  betainfo,
+  betainfoen,
+  languages,
+  tginfo,
+  tginfoen,
+} from "../data.ts";
 
 const composer = new Composer();
 
@@ -8,32 +15,26 @@ export default composer;
 
 const gtr = new GTR();
 
-const alt = -1001253459535;
+const allChannels = [alt, tginfo, betainfo, tginfoen, betainfoen];
 
-const tginfo = 1001003307527;
-const betainfo = -1001313913616;
+const betaChannels = [betainfo, betainfoen];
 
-const tginfoen = -1001263222189;
-const betainfoen = -1001335406586;
-
-const froms = [alt, tginfo, betainfo, tginfoen, betainfoen];
-
-const betas = [betainfo, betainfoen];
-
-const keyFroms = {
+const keyChannels = {
   "ru": [tginfo, betainfo],
   "en": [tginfoen, betainfoen],
 };
 
-composer.on(["channel_post:text", "channel_post:caption"]).filter((ctx) =>
-  froms.includes(ctx.chat.id)
-).use(async (ctx) => {
+composer.on(["channel_post:text", "channel_post:caption"]).filter((
+  ctx,
+) => allChannels.includes(ctx.chat.id)).use(async (ctx) => {
   const text = ctx.channelPost.text || ctx.channelPost.caption!;
   const isAlt = ctx.chat.id == alt;
-  const isBeta = betas.includes(ctx.chat.id);
+  const isBeta = betaChannels.includes(ctx.chat.id);
 
-  for (const language of await languages.getAll()) {
-    if (!isAlt && !keyFroms[language.from].includes(ctx.chat.id)) {
+  for (const id in languages) {
+    const language = languages[id];
+
+    if (!isAlt && !keyChannels[language.from].includes(ctx.chat.id)) {
       continue;
     }
 
@@ -41,39 +42,40 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((ctx) =>
 
     try {
       const result = await gtr.translate(text, {
-        targetLang: language.targetLang ?? language.id,
+        targetLang: language.targetLang ?? id,
         sourceLang: language.from,
       });
 
-      translation = result.trans.replace(/> /g, ">")
-        .replace(/# /g, "#")
-        .replace(/ < \/ a>/g, "</a>")
-        .replace(/< \/ a>/g, "</a>");
-    } catch (_err) {
-      translation = text;
+      translation = result.trans
+        .replace(/# /g, "#");
+    } catch (err) {
+      translation = `An error occurred while translating.\n\n${String(err)}`;
     }
 
-    const replyMarkup = isAlt ? undefined : new InlineKeyboard().text(
-      `Send to @${isBeta ? "beta" : "tg"}info${language.id}`,
-      `${isBeta ? "beta" : "tg"}_${language.id}`,
-    ).row().url(
-      "Original Message",
-      `https://t.me/${
-        String(ctx.chat.id).slice(4)
-      }/${ctx.channelPost.message_id}`,
-    ).row().text("Idle", "idle");
+    const textLinks =
+      (ctx.channelPost.entities || ctx.channelPost.caption_entities)?.filter((
+        e,
+      ): e is typeof e & { type: "text_link" } => e.type == "text_link").map((
+        e,
+      ) => e.url);
 
-    if (ctx.channelPost.caption) {
-      try {
-        await ctx.copyMessage(language.edit, {
-          caption: translation,
-          reply_markup: replyMarkup,
-        });
-      } catch (_err) {
-        await ctx.api.sendMessage(language.edit, translation);
-      }
-    } else {
-      await ctx.api.sendMessage(language.edit, translation);
-    }
+    translation += textLinks && textLinks.length != 0
+      ? "\n\nLinks:\n" + textLinks.join("\n")
+      : "";
+
+    const { message_id: messageId } = await ctx.copyMessage(language.edit, {
+      reply_markup: new InlineKeyboard().text(
+        `Send to @${isBeta ? "beta" : "tg"}info${id}`,
+        `${isBeta ? "beta" : "tg"}_${id}`,
+      ).row().text("Idle", `idle_${id}`),
+    });
+
+    await ctx.api.sendMessage(language.edit, translation, {
+      disable_web_page_preview: true,
+      reply_to_message_id: messageId,
+      reply_markup: new InlineKeyboard().text("Delete", "delete"),
+    });
+
+    await ctx.api.pinChatMessage(language.edit, messageId);
   }
 });
