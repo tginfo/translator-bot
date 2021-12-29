@@ -1,9 +1,17 @@
-import { Composer } from "https://deno.land/x/grammy/mod.ts";
-import { answerWithError, findLanguage } from "../utils.ts";
+import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
+import { GTR } from "https://deno.land/x/gtr/mod.ts";
+import {
+  answerWithError,
+  findLanguage,
+  removeButton,
+  replaceButton,
+} from "../utils.ts";
 
 const composer = new Composer();
 
 export default composer;
+
+const gtr = new GTR();
 
 const cq = composer.on("callback_query").filter((
   ctx,
@@ -26,36 +34,61 @@ const cq = composer.on("callback_query").filter((
   !!ctx.callbackQuery.message.reply_markup
 );
 
-cq.callbackQuery(/^idle/, async (ctx) => {
-  await findLanguage(ctx);
+cq.callbackQuery("translate", async (ctx) => {
+  const language = await findLanguage(ctx);
 
-  const inlineKeyboard = ctx.callbackQuery.message.reply_markup.inline_keyboard;
+  const text = ctx.callbackQuery.message.text ||
+    ctx.callbackQuery.message.caption!;
+  const entities = ctx.callbackQuery.message.entities ||
+    ctx.callbackQuery.message.caption_entities;
 
-  if (ctx.callbackQuery.data != `idle_${ctx.from.id}`) {
-    inlineKeyboard[1][0] = {
-      text: `Idled by ${ctx.from.first_name}`,
-      callback_data: `idle_${ctx.from.id}`,
-    };
+  let translation;
 
-    await ctx.editMessageReplyMarkup({
-      reply_markup: {
-        inline_keyboard: inlineKeyboard,
-      },
+  try {
+    const result = await gtr.translate(text, {
+      targetLang: language.targetLang ?? language.id,
+      sourceLang: language.from,
     });
-    return;
+
+    translation = result.trans
+      .replace(/# /g, "#");
+  } catch (err) {
+    translation = `An error occurred while translating.\n\n${String(err)}`;
   }
 
-  inlineKeyboard[1][0] = {
-    text: `Idle`,
-    callback_data: `idle`,
-  };
+  const textLinks = entities?.filter((
+    e,
+  ): e is typeof e & { type: "text_link" } => e.type == "text_link").map((
+    e,
+  ) => e.url);
 
-  await ctx.editMessageReplyMarkup({
-    reply_markup: {
-      inline_keyboard: inlineKeyboard,
-    },
-  });
+  translation += textLinks && textLinks.length != 0
+    ? "\n\nLinks:\n" + textLinks.join("\n")
+    : "";
+
+  removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
+
+  try {
+    await ctx.editMessageReplyMarkup({
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    });
+
+    await ctx.reply(text, {
+      entities,
+      reply_markup: new InlineKeyboard().text("Delete", "delete"),
+    });
+
+    if (ctx.callbackQuery.message.text) {
+      await ctx.editMessageText(translation);
+    } else {
+      await ctx.editMessageCaption({ caption: translation });
+    }
+  } catch (err) {
+    await answerWithError(ctx, err);
+  }
 });
+
+cq.callbackQuery("delete", (ctx) => ctx.deleteMessage());
 
 cq.callbackQuery(/^send/, async (ctx) => {
   const language = await findLanguage(ctx);
@@ -71,16 +104,15 @@ cq.callbackQuery(/^send/, async (ctx) => {
     return;
   }
 
-  const inlineKeyboard = ctx.callbackQuery.message.reply_markup.inline_keyboard;
-
-  inlineKeyboard[0][0] = {
-    text: inlineKeyboard[0][0]
-      .text.replace("Send to", "Edit in"),
-    callback_data: `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`,
-  };
+  replaceButton(
+    ctx.callbackQuery.message.reply_markup,
+    ctx.callbackQuery.data,
+    (c) => c.replace("Send to", "Edit in"),
+    `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`,
+  );
 
   await ctx.editMessageReplyMarkup({
-    reply_markup: { inline_keyboard: inlineKeyboard },
+    reply_markup: ctx.callbackQuery.message.reply_markup,
   });
 });
 
@@ -108,4 +140,33 @@ cq.callbackQuery(/^edit/, async (ctx) => {
     await answerWithError(ctx, err);
     return;
   }
+});
+
+cq.callbackQuery(/^idle/, async (ctx) => {
+  await findLanguage(ctx);
+
+  if (ctx.callbackQuery.data != `idle_${ctx.from.id}`) {
+    replaceButton(
+      ctx.callbackQuery.message.reply_markup,
+      ctx.callbackQuery.data,
+      `Idled by ${ctx.from.first_name}`,
+      `idle_${ctx.from.id}`,
+    );
+
+    await ctx.editMessageReplyMarkup({
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    });
+    return;
+  }
+
+  replaceButton(
+    ctx.callbackQuery.message.reply_markup,
+    ctx.callbackQuery.data,
+    `Idle`,
+    `idle`,
+  );
+
+  await ctx.editMessageReplyMarkup({
+    reply_markup: ctx.callbackQuery.message.reply_markup,
+  });
 });
