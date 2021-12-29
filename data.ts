@@ -15,7 +15,7 @@ export const languages: Record<string, Language> = data.languages;
 
 export const sudoers: Sudoer[] = data.sudoers;
 
-export const alt = -1001589900563;
+export const alt = -1001253459535;
 
 export const tginfo = 1001003307527;
 
