@@ -108,7 +108,6 @@ export function log(
     `%c   [${new Date().toLocaleTimeString().slice(0, -3)}]: ${text}`,
     variants[variant],
   );
-  console.log();
 }
 
 export function hasButton(
