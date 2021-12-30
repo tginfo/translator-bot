@@ -56,6 +56,32 @@ su.command("export", (ctx) => {
   );
 });
 
+su.command("add", async (ctx) => {
+  const id = ctx.message.text.split(/\s/)[1];
+  const translator = ctx.message.reply_to_message?.from?.id;
+
+  if (!id || !translator) {
+    await ctx.reply("Reply to someone and pass the language ID.");
+    return;
+  }
+
+  const language = languages[id];
+
+  if (typeof language === "undefined") {
+    await ctx.reply(`Language ${id} not found.`);
+    return;
+  }
+
+  if (language.translators.includes(translator)) {
+    await ctx.reply("The replied user is already a translator.");
+    return;
+  }
+
+  languages[id].translators.push(translator);
+  log(`Added ${translator} to ${id}.`, "primary");
+  await ctx.reply(`Added to ${id}.`);
+});
+
 su.command("stats", async (ctx) => {
   const id = ctx.message.text.split(/\s/)[1];
 
