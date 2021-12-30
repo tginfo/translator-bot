@@ -1,8 +1,9 @@
-import { Composer } from "https://deno.land/x/grammy/mod.ts";
-import { languages, sudoers, updateData } from "../data.ts";
+import { Composer, InputFile } from "https://deno.land/x/grammy/mod.ts";
+import { dump, languages, sudoers, updateData } from "../data.ts";
 import { getUserLink, log } from "../utils.ts";
+import { Context } from "../context.ts";
 
-const composer = new Composer();
+const composer = new Composer<Context>();
 
 export default composer;
 
@@ -12,15 +13,17 @@ const su = composer.filter((
   !!ctx.from && sudoers.includes(ctx.from.id)
 );
 
-su.command("update", async (ctx) => {
-  const url = ctx.message?.text.split(/\s/)[1];
+su.command("import", async (ctx) => {
+  const document = ctx.message?.reply_to_message?.document;
 
-  if (!url) {
-    await ctx.reply("URL not provided.");
+  if (!document || document.mime_type != "application/json") {
+    await ctx.reply("Reply a json file.");
     return;
   }
 
-  log(`Received a URL to update data.`, "primary");
+  const url = (await ctx.api.getFile(document.file_id)).getUrl();
+
+  log(`Received a request to update data.`, "primary");
 
   let data;
 
@@ -42,6 +45,15 @@ su.command("update", async (ctx) => {
 
   await ctx.reply("Data not updated.");
   log(`Data not updated.`, "primary");
+});
+
+su.command("export", (ctx) => {
+  return ctx.replyWithDocument(
+    new InputFile(
+      dump(),
+      "data.json",
+    ),
+  );
 });
 
 su.command("stats", async (ctx) => {

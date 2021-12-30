@@ -70,3 +70,7 @@ export async function updateData(data: any) {
 
   return false;
 }
+
+export function dump() {
+  return new TextEncoder().encode(JSON.stringify({ languages, sudoers }));
+}
