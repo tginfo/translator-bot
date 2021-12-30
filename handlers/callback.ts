@@ -86,14 +86,17 @@ cq.callbackQuery("translate", async (ctx) => {
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
 
+    const other = {
+      disable_web_page_preview: true,
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    };
+
     if (ctx.callbackQuery.message.text) {
-      await ctx.editMessageText(translation, {
-        reply_markup: ctx.callbackQuery.message.reply_markup,
-      });
+      await ctx.editMessageText(translation, other);
     } else {
       await ctx.editMessageCaption({
         caption: translation,
-        reply_markup: ctx.callbackQuery.message.reply_markup,
+        ...other,
       });
     }
   } catch (err) {
