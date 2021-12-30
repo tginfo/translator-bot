@@ -4,6 +4,8 @@ import { log } from "../utils.ts";
 
 const composer = new Composer();
 
+export default composer;
+
 const su = composer.filter((
   ctx,
 ): ctx is typeof ctx & { from: NonNullable<typeof ctx["from"]> } =>
