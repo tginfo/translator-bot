@@ -128,6 +128,8 @@ cq.callbackQuery(/^send/, async (ctx) => {
     return;
   }
 
+  removeButton(ctx.callbackQuery.message.reply_markup, "translate");
+
   replaceButton(
     ctx.callbackQuery.message.reply_markup,
     ctx.callbackQuery.data,
