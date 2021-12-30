@@ -54,9 +54,7 @@ export async function updateData(data: any) {
       languages[k] = data.languages[k];
     }
 
-    for (const k in sudoers) {
-      delete sudoers[k];
-    }
+    sudoers.splice(0, sudoers.length);
 
     for (const sudoer of data.sudoers) {
       sudoers.push(sudoer);
