@@ -29,7 +29,7 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
   const isBeta = betaChannels.includes(ctx.chat.id);
 
   log(
-    `Received a ${ctx.channelPost.message_id} from` + (
+    `Received a post [${ctx.channelPost.message_id}] from the ` + (
       keyChannels.en.includes(ctx.chat.id)
         ? "English"
         : keyChannels.ru.includes(ctx.chat.id)
