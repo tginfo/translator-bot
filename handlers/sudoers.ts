@@ -72,8 +72,8 @@ su.command("stats", async (ctx) => {
   }
 
   await ctx.reply(
-    `Languages: ${Object.keys(languages).length}\nSudoers: ${
-      sudoers.map(getUserLink).join(", ")
+    `Sudoers: ${sudoers.map(getUserLink).join(", ")}\n\nLanguages: ${
+      Object.keys(languages).join(", ")
     }`,
     { parse_mode: "HTML" },
   );
