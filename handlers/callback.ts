@@ -102,7 +102,10 @@ cq.callbackQuery("translate", async (ctx) => {
   }
 });
 
-cq.callbackQuery("delete", (ctx) => ctx.deleteMessage());
+cq.callbackQuery("delete", async (ctx) => {
+  await findLanguage(ctx);
+  await ctx.deleteMessage();
+});
 
 cq.callbackQuery(/^send/, async (ctx) => {
   const language = await findLanguage(ctx);
