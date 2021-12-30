@@ -5,6 +5,8 @@ import env from "./env.ts";
 
 const bot = new Bot(env.BOT_TOKEN);
 
+bot.catch(console.error);
+
 bot.api.config.use(hydrateFiles(bot.token));
 
 bot.use(handlers);

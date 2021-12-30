@@ -1,7 +1,7 @@
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
 import { GTR } from "https://deno.land/x/gtr/mod.ts";
 import {
-  answerWithError,
+  answerError,
   findLanguage,
   removeButton,
   replaceButton,
@@ -84,7 +84,7 @@ cq.callbackQuery("translate", async (ctx) => {
       await ctx.editMessageCaption({ caption: translation });
     }
   } catch (err) {
-    await answerWithError(ctx, err);
+    await answerError(ctx, err);
   }
 });
 
@@ -100,7 +100,7 @@ cq.callbackQuery(/^send/, async (ctx) => {
   try {
     message = await ctx.copyMessage(chatId);
   } catch (err) {
-    await answerWithError(ctx, err);
+    await answerError(ctx, err);
     return;
   }
 
@@ -137,7 +137,7 @@ cq.callbackQuery(/^edit/, async (ctx) => {
       });
     }
   } catch (err) {
-    await answerWithError(ctx, err);
+    await answerError(ctx, err);
     return;
   }
 });

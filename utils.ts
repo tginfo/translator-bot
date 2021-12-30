@@ -9,7 +9,7 @@ export function answer(ctx: Context, text: string) {
   return ctx.answerCallbackQuery({ text, show_alert: true });
 }
 
-export function answerWithError(ctx: Context, err: unknown) {
+export function answerError(ctx: Context, err: unknown) {
   if (err instanceof GrammyError) {
     let text;
 
