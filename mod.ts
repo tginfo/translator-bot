@@ -6,7 +6,7 @@ import env from "./env.ts";
 
 const bot = new Bot(env.BOT_TOKEN);
 
-bot.catch(console.error);
+bot.catch(({ error }) => log(String(error), "warning"));
 
 bot.api.config.use(hydrateFiles(bot.token));
 
