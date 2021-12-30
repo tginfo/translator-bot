@@ -81,8 +81,7 @@ cq.callbackQuery("translate", async (ctx) => {
   removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
 
   try {
-    await ctx.reply(text, {
-      entities,
+    await ctx.copyMessage(ctx.callbackQuery.message.chat.id, {
       reply_to_message_id: ctx.callbackQuery.message.message_id,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
