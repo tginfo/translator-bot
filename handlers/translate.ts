@@ -50,10 +50,11 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
 
     try {
       await ctx.copyMessage(language.edit, {
-        reply_markup: new InlineKeyboard().text("translate").row().text(
-          `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-          `send_${isBeta ? "beta" : "tg"}}`,
-        ).row().text("Idle", `idle_${id}`),
+        reply_markup: new InlineKeyboard().text("Translate", "translate").row()
+          .text(
+            `Send to ${isBeta ? "Beta" : "Main"} Channel`,
+            `send_${isBeta ? "beta" : "tg"}}`,
+          ).row().text("Idle", `idle_${id}`),
       });
 
       log(`Copied ${ctx.channelPost.message_id} to ${id} middle.`, "success");
