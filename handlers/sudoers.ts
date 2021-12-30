@@ -75,5 +75,6 @@ su.command("stats", async (ctx) => {
     `Languages: ${Object.keys(languages).length}\nSudoers: ${
       sudoers.map(getUserLink).join(", ")
     }`,
+    { parse_mode: "HTML" },
   );
 });
