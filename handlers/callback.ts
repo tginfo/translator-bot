@@ -68,24 +68,14 @@ cq.callbackQuery("translate", async (ctx) => {
   removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
 
   try {
-    await ctx.copyMessage(ctx.callbackQuery.message.chat.id, {
+    await ctx.editMessageReplyMarkup({
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    });
+
+    await ctx.reply(translation, {
       reply_to_message_id: ctx.callbackQuery.message.message_id,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
-
-    const other = {
-      disable_web_page_preview: true,
-      reply_markup: ctx.callbackQuery.message.reply_markup,
-    };
-
-    if (ctx.callbackQuery.message.text) {
-      await ctx.editMessageText(translation, other);
-    } else {
-      await ctx.editMessageCaption({
-        caption: translation,
-        ...other,
-      });
-    }
   } catch (err) {
     await answerError(ctx, err);
   }
