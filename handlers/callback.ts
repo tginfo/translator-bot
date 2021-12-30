@@ -83,6 +83,7 @@ cq.callbackQuery("translate", async (ctx) => {
   try {
     await ctx.reply(text, {
       entities,
+      reply_to_message_id: ctx.callbackQuery.message.message_id,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
 
