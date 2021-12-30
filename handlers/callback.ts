@@ -1,8 +1,10 @@
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
 import { GTR } from "https://deno.land/x/gtr/mod.ts";
 import {
+  answer,
   answerError,
   findLanguage,
+  hasButton,
   log,
   removeButton,
   replaceButton,
@@ -54,10 +56,10 @@ cq.callbackQuery("translate", async (ctx) => {
     translation = result.trans
       .replace(/# /g, "#");
 
-    log(`Translation successful in ${language.id} middle.`, 'success');
+    log(`Translation successful in ${language.id} middle.`, "success");
   } catch (err) {
     translation = `An error occurred while translating.\n\n${err}`;
-    log(`Translation unsuccessful in ${language.id} middle: ${err}`, 'warning');
+    log(`Translation unsuccessful in ${language.id} middle: ${err}`, "warning");
   }
 
   const textLinks = entities?.filter((
@@ -96,6 +98,12 @@ cq.callbackQuery("delete", (ctx) => ctx.deleteMessage());
 
 cq.callbackQuery(/^send/, async (ctx) => {
   const language = await findLanguage(ctx);
+
+  if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
+    await answer(ctx, "Can't send idled post.");
+    return;
+  }
+
   const isBeta = ctx.callbackQuery.data.split("_")[1] == "beta";
   const chatId = isBeta ? language.beta : language.main;
 
@@ -103,10 +111,10 @@ cq.callbackQuery(/^send/, async (ctx) => {
 
   try {
     message = await ctx.copyMessage(chatId);
-    log(`Sending successful in ${language.id} middle.`, 'success');
+    log(`Sending successful in ${language.id} middle.`, "success");
   } catch (err) {
     await answerError(ctx, err);
-    log(`Sending unsuccessful in ${language.id} middle: ${err}`, 'error');
+    log(`Sending unsuccessful in ${language.id} middle: ${err}`, "error");
     return;
   }
 
@@ -124,6 +132,12 @@ cq.callbackQuery(/^send/, async (ctx) => {
 
 cq.callbackQuery(/^edit/, async (ctx) => {
   const language = await findLanguage(ctx);
+
+  if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
+    await answer(ctx, "Can't edit idled post.");
+    return;
+  }
+
   const isBeta = ctx.callbackQuery.data.split("_")[1] == "beta";
   const chatId = isBeta ? language.beta : language.main;
   const messageId = Number(ctx.callbackQuery.data.split("_")[2]);
@@ -143,10 +157,10 @@ cq.callbackQuery(/^edit/, async (ctx) => {
       });
     }
 
-    log(`Editing successful in ${language.id} middle.`, 'success');
+    log(`Editing successful in ${language.id} middle.`, "success");
   } catch (err) {
     await answerError(ctx, err);
-    log(`Editing unsuccessful in ${language.id} middle.`, 'warning');
+    log(`Editing unsuccessful in ${language.id} middle.`, "warning");
     return;
   }
 });

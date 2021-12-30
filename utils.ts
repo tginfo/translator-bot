@@ -104,3 +104,22 @@ export function log(
   );
   console.log();
 }
+
+export function hasButton(
+  { inline_keyboard }: InlineKeyboardMarkup,
+  callbackData: string,
+) {
+  for (const i in inline_keyboard) {
+    const x = inline_keyboard[i];
+
+    for (const i in x) {
+      const y = <InlineKeyboardButton.CallbackButton> x[i];
+
+      if (y.callback_data.includes(callbackData)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
