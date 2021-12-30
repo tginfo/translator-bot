@@ -1,4 +1,5 @@
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
+import { log } from "../utils.ts";
 import {
   alt,
   betainfo,
@@ -27,6 +28,19 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
   const isAlt = ctx.chat.id == alt;
   const isBeta = betaChannels.includes(ctx.chat.id);
 
+  log(
+    `Received a ${ctx.channelPost.message_id} from` + (
+      keyChannels.en.includes(ctx.chat.id)
+        ? "English"
+        : keyChannels.ru.includes(ctx.chat.id)
+        ? "Russian"
+        : isAlt
+        ? "alt"
+        : ""
+    ) + ` ${isBeta ? "beta " : ""}channel.`,
+    "primary",
+  );
+
   for (const id in languages) {
     const language = languages[id];
 
@@ -34,11 +48,20 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
       continue;
     }
 
-    await ctx.copyMessage(language.edit, {
-      reply_markup: new InlineKeyboard().text("translate").row().text(
-        `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-        `send_${isBeta ? "beta" : "tg"}}`,
-      ).row().text("Idle", `idle_${id}`),
-    });
+    try {
+      await ctx.copyMessage(language.edit, {
+        reply_markup: new InlineKeyboard().text("translate").row().text(
+          `Send to ${isBeta ? "Beta" : "Main"} Channel`,
+          `send_${isBeta ? "beta" : "tg"}}`,
+        ).row().text("Idle", `idle_${id}`),
+      });
+
+      log(`Copied ${ctx.channelPost.message_id} to ${id} middle.`, "success");
+    } catch (err) {
+      log(
+        `Failed to copy ${ctx.channelPost.message_id} to ${id} middle: ${err}`,
+        "error",
+      );
+    }
   }
 });

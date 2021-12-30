@@ -84,3 +84,23 @@ export function replaceButton(
     }
   }
 }
+
+const variants = {
+  normal: "",
+  primary: "background-color: #00f; color: #fff",
+  secondary: "background-color: #fff; color: #000",
+  success: "background-color: #0f0; color: #000",
+  warning: "background-color: #ff0; color: #000",
+  error: "background-color: #f00; color: #fff",
+};
+
+export function log(
+  text: string,
+  variant: keyof typeof variants = "normal",
+) {
+  console.log(
+    `%c   [${new Date().toLocaleTimeString().slice(0, -3)}]: ${text}`,
+    variants[variant],
+  );
+  console.log();
+}

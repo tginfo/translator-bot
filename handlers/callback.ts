@@ -3,6 +3,7 @@ import { GTR } from "https://deno.land/x/gtr/mod.ts";
 import {
   answerError,
   findLanguage,
+  log,
   removeButton,
   replaceButton,
 } from "../utils.ts";
@@ -52,8 +53,11 @@ cq.callbackQuery("translate", async (ctx) => {
 
     translation = result.trans
       .replace(/# /g, "#");
+
+    log(`Translation successful in ${language.id} middle.`, 'success');
   } catch (err) {
-    translation = `An error occurred while translating.\n\n${String(err)}`;
+    translation = `An error occurred while translating.\n\n${err}`;
+    log(`Translation unsuccessful in ${language.id} middle: ${err}`, 'warning');
   }
 
   const textLinks = entities?.filter((
@@ -99,8 +103,10 @@ cq.callbackQuery(/^send/, async (ctx) => {
 
   try {
     message = await ctx.copyMessage(chatId);
+    log(`Sending successful in ${language.id} middle.`, 'success');
   } catch (err) {
     await answerError(ctx, err);
+    log(`Sending unsuccessful in ${language.id} middle: ${err}`, 'error');
     return;
   }
 
@@ -136,8 +142,11 @@ cq.callbackQuery(/^edit/, async (ctx) => {
         caption_entities: ctx.callbackQuery.message.caption_entities,
       });
     }
+
+    log(`Editing successful in ${language.id} middle.`, 'success');
   } catch (err) {
     await answerError(ctx, err);
+    log(`Editing unsuccessful in ${language.id} middle.`, 'warning');
     return;
   }
 });
