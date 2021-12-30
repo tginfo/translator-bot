@@ -39,11 +39,8 @@ const cq = composer.on("callback_query").filter((
 
 cq.callbackQuery("translate", async (ctx) => {
   const language = await findLanguage(ctx);
-
   const text = ctx.callbackQuery.message.text ||
     ctx.callbackQuery.message.caption!;
-  const entities = ctx.callbackQuery.message.entities ||
-    ctx.callbackQuery.message.caption_entities;
 
   let translation;
 
@@ -67,16 +64,6 @@ cq.callbackQuery("translate", async (ctx) => {
       "warning",
     );
   }
-
-  const textLinks = entities?.filter((
-    e,
-  ): e is typeof e & { type: "text_link" } => e.type == "text_link").map((
-    e,
-  ) => e.url);
-
-  translation += textLinks && textLinks.length != 0
-    ? "\n\nLinks:\n" + textLinks.join("\n")
-    : "";
 
   removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
 
