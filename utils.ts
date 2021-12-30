@@ -129,3 +129,7 @@ export function hasButton(
 
   return false;
 }
+
+export function getUserLink(id: number) {
+  return `<a href="tg://user?id=${id}">${id}</>`;
+}
