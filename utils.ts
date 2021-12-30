@@ -51,18 +51,24 @@ export function removeButton(
   replyMarkup: InlineKeyboardMarkup,
   callbackData: string,
 ) {
-  for (const i in replyMarkup.inline_keyboard) {
-    const x = replyMarkup.inline_keyboard[i];
-
-    for (const i in x) {
+  for (const x in replyMarkup.inline_keyboard) {
+    for (const y in replyMarkup.inline_keyboard[x]) {
       if (
-        (<InlineKeyboardButton.CallbackButton> x[i]).callback_data ==
-          callbackData
+        (<InlineKeyboardButton.CallbackButton> replyMarkup
+          .inline_keyboard[x][y]).callback_data == callbackData
       ) {
-        delete x[i];
+        delete replyMarkup.inline_keyboard[x][y];
       }
     }
+
+    replyMarkup.inline_keyboard[x] = replyMarkup.inline_keyboard[x].filter(
+      (y) => y,
+    );
   }
+
+  replyMarkup.inline_keyboard = replyMarkup.inline_keyboard.filter((x) =>
+    x.length != 0
+  );
 }
 
 export function replaceButton(

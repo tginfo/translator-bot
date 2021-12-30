@@ -53,7 +53,7 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
         reply_markup: new InlineKeyboard().text("Translate", "translate").row()
           .text(
             `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-            `send_${isBeta ? "beta" : "tg"}}`,
+            `send_${isBeta ? "beta" : "tg"}`,
           ).row().text("Idle", `idle_${id}`),
       });
 

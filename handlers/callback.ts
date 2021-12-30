@@ -56,10 +56,16 @@ cq.callbackQuery("translate", async (ctx) => {
     translation = result.trans
       .replace(/# /g, "#");
 
-    log(`Translation successful in ${language.id} middle.`, "success");
+    log(
+      `Request to Google Translate successful for ${language.id} middle.`,
+      "success",
+    );
   } catch (err) {
     translation = `An error occurred while translating.\n\n${err}`;
-    log(`Translation unsuccessful in ${language.id} middle: ${err}`, "warning");
+    log(
+      `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
+      "warning",
+    );
   }
 
   const textLinks = entities?.filter((
@@ -75,19 +81,20 @@ cq.callbackQuery("translate", async (ctx) => {
   removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
 
   try {
-    await ctx.editMessageReplyMarkup({
-      reply_markup: ctx.callbackQuery.message.reply_markup,
-    });
-
     await ctx.reply(text, {
       entities,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
 
     if (ctx.callbackQuery.message.text) {
-      await ctx.editMessageText(translation);
+      await ctx.editMessageText(translation, {
+        reply_markup: ctx.callbackQuery.message.reply_markup,
+      });
     } else {
-      await ctx.editMessageCaption({ caption: translation });
+      await ctx.editMessageCaption({
+        caption: translation,
+        reply_markup: ctx.callbackQuery.message.reply_markup,
+      });
     }
   } catch (err) {
     await answerError(ctx, err);
