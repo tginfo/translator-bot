@@ -54,7 +54,7 @@ composer.on(["channel_post:text", "channel_post:caption"]).filter((
           .text(
             `Send to ${isBeta ? "Beta" : "Main"} Channel`,
             `send_${isBeta ? "beta" : "tg"}`,
-          ).row().text("Idle", `idle_${id}`),
+          ).row().text("Idle", `idle`),
       });
 
       log(`Copied ${ctx.channelPost.message_id} to ${id} middle.`, "success");
