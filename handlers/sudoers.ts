@@ -72,9 +72,11 @@ su.command("stats", async (ctx) => {
   }
 
   await ctx.reply(
-    `Sudoers: ${sudoers.map(getUserLink).join(", ")}\n\nLanguages: ${
-      Object.keys(languages).join(", ")
-    }`,
+    `Sudoers: ${
+      sudoers.map(getUserLink).join(", ")
+    } (${sudoers.length})\n\nLanguages: ${Object.keys(languages).join(", ")} (${
+      Object.keys(languages).length
+    })`,
     { parse_mode: "HTML" },
   );
 });
