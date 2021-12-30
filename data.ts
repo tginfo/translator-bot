@@ -14,7 +14,7 @@ let paths = new Array<string>();
 for await (const entry of Deno.readDir("./")) {
   if (
     !entry.isFile || !entry.name.startsWith("data") ||
-    !entry.name.endsWith(".json")
+    !entry.name.endsWith(".json") || entry.name == "data.json"
   ) {
     continue;
   }
