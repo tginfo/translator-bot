@@ -1,3 +1,11 @@
+import {
+  bgBlue,
+  bgGreen,
+  bgRed,
+  bgWhite,
+  bgYellow,
+  black,
+} from "https://deno.land/std@0.119.0/fmt/colors.ts";
 import { Context, GrammyError } from "https://deno.land/x/grammy/mod.ts";
 import {
   InlineKeyboardButton,
@@ -92,21 +100,22 @@ export function replaceButton(
 }
 
 const variants = {
-  normal: "",
-  primary: "background-color: #00f; color: #fff",
-  secondary: "background-color: #fff; color: #000",
-  success: "background-color: #0f0; color: #000",
-  warning: "background-color: #ff0; color: #000",
-  error: "background-color: #f00; color: #fff",
+  normal: (str: string) => str,
+  primary: (str: string) => bgBlue(black(str)),
+  secondary: (str: string) => bgWhite(black(str)),
+  success: (str: string) => bgGreen(black(str)),
+  warning: (str: string) => bgYellow(black(str)),
+  error: (str: string) => bgRed(black(str)),
 };
 
 export function log(
   text: string,
   variant: keyof typeof variants = "normal",
 ) {
+  text = new Date().toLocaleTimeString().slice(0, -3) + ": " + text;
+
   console.log(
-    `%c   [${new Date().toLocaleTimeString().slice(0, -3)}]: ${text}`,
-    variants[variant],
+    variants[variant](text),
   );
 }
 
