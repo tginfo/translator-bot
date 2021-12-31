@@ -139,7 +139,7 @@ export function getUserLink(id: number) {
   return `<a href="tg://user?id=${id}">${id}</>`;
 }
 
-function escape(s: string) {
+export function escape(s: string) {
   s = s.replace(/&/g, "&amp;");
   s = s.replace(/</g, "&lt;");
   s = s.replace(/>/g, "&gt;");
