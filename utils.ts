@@ -10,7 +10,7 @@ import { Context, GrammyError } from "https://deno.land/x/grammy/mod.ts";
 import {
   InlineKeyboardButton,
   InlineKeyboardMarkup,
-} from "https://cdn.skypack.dev/@grammyjs/types@v2.4.5?dts";
+} from "https://cdn.skypack.dev/@grammyjs/types@v2.5.0?dts";
 import { Language, languages } from "./data.ts";
 
 export function answer(ctx: Context, text: string) {
