@@ -1,5 +1,5 @@
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
-import { GTR } from "https://deno.land/x/gtr/mod.ts";
+import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,
   answerError,
@@ -8,13 +8,14 @@ import {
   log,
   removeButton,
   replaceButton,
+  escape
 } from "../utils.ts";
 
 const composer = new Composer();
 
 export default composer;
 
-const gtr = new GTR();
+const gtr = new TelegramGTR();
 
 const cq = composer.on("callback_query").filter((
   ctx,
@@ -41,6 +42,7 @@ cq.callbackQuery("translate", async (ctx) => {
   const language = await findLanguage(ctx);
   const text = ctx.callbackQuery.message.text ||
     ctx.callbackQuery.message.caption!;
+  const entities = ctx.callbackQuery.message.entities || ctx.callbackQuery.message.caption_entities;
 
   let translation;
 
@@ -48,17 +50,17 @@ cq.callbackQuery("translate", async (ctx) => {
     const result = await gtr.translate(text, {
       targetLang: language.targetLang ?? language.id,
       sourceLang: language.from,
+      entities,
     });
 
-    translation = result.trans
-      .replace(/# /g, "#");
+    translation = result.trans;
 
     log(
       `Request to Google Translate successful for ${language.id} middle.`,
       "success",
     );
   } catch (err) {
-    translation = `An error occurred while translating.\n\n${err}`;
+    translation = `An error occurred while translating.\n\n${escape(err)}`;
     log(
       `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
       "warning",
@@ -73,6 +75,7 @@ cq.callbackQuery("translate", async (ctx) => {
     });
 
     await ctx.reply(translation, {
+      parse_mode: 'HTML',
       reply_to_message_id: ctx.callbackQuery.message.message_id,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
