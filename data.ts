@@ -13,8 +13,10 @@ let paths = new Array<string>();
 
 for await (const entry of Deno.readDir("./")) {
   if (
-    !entry.isFile || !entry.name.startsWith("data") ||
-    !entry.name.endsWith(".json") || entry.name == "data.json"
+    !entry.isFile ||
+    !entry.name.startsWith("data") ||
+    !entry.name.endsWith(".json") ||
+    entry.name == "data.json"
   ) {
     continue;
   }
@@ -24,9 +26,10 @@ for await (const entry of Deno.readDir("./")) {
 
 paths = paths.filter((p) => p != "data.json");
 
-paths.sort((a, b) =>
-  Number(a.replace(".json", "").split("-")[1]) -
-  Number(b.replace(".json", "").split("-")[1])
+paths.sort(
+  (a, b) =>
+    Number(a.replace(".json", "").split("-")[1]) -
+    Number(b.replace(".json", "").split("-")[1]),
 );
 
 const path = paths.slice(-1)[0] || "data.json";

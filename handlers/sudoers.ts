@@ -7,10 +7,9 @@ const composer = new Composer<Context>();
 
 export default composer;
 
-const su = composer.filter((
-  ctx,
-): ctx is typeof ctx & { from: NonNullable<typeof ctx["from"]> } =>
-  !!ctx.from && sudoers.includes(ctx.from.id)
+const su = composer.filter(
+  (ctx): ctx is typeof ctx & { from: NonNullable<typeof ctx["from"]> } =>
+    !!ctx.from && sudoers.includes(ctx.from.id),
 );
 
 su.command("import", async (ctx) => {
@@ -48,12 +47,7 @@ su.command("import", async (ctx) => {
 });
 
 su.command("export", (ctx) => {
-  return ctx.replyWithDocument(
-    new InputFile(
-      dump(),
-      "data.json",
-    ),
-  );
+  return ctx.replyWithDocument(new InputFile(dump(), "data.json"));
 });
 
 su.command("add", async (ctx) => {

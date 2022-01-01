@@ -4,10 +4,10 @@ import {
 } from "https://deno.land/std@0.119.0/testing/asserts.ts";
 import { MessageEntity } from "https://cdn.skypack.dev/@grammyjs/types@v2.5.0?dts";
 import {
+  escape,
+  hasButton,
   removeButton,
   replaceButton,
-  hasButton,
-  escape,
   unparse,
 } from "./utils.ts";
 
@@ -46,12 +46,13 @@ Deno.test("escape", () => {
 
   assertEquals(
     escaped,
-    "&lt;a href=&quot;https://tginfo.me&quot;&gt;Telegram Info&lt;/a&gt;"
+    "&lt;a href=&quot;https://tginfo.me&quot;&gt;Telegram Info&lt;/a&gt;",
   );
 });
 
 Deno.test("unparse", () => {
-  const text = `Pavel Durov is the luckiest Russian ever according to this a>ticle.
+  const text =
+    `Pavel Durov is the luckiest Russian ever according to this a>ticle.
 
   — sendMessage and editMessageText are the most used Bot API methods.
 
@@ -74,16 +75,16 @@ This text is underlined and a spoiler!`;
     { type: "underline", offset: 202, length: 38 },
   ];
 
-  const html = unparse(text,entities);
+  const html = unparse(text, entities);
 
   assertEquals(
-      html,
-`<b>Pavel Durov</b> is the luckiest Russian ever according to <a href="http://telegra.ph/?fb_cli_id=%15%12">this a&gt;ticle</a>.
+    html,
+    `<b>Pavel Durov</b> is the luckiest Russian ever according to <a href="http://telegra.ph/?fb_cli_id=%15%12">this a&gt;ticle</a>.
 
   — <code>sendMessage</code> and <code>editMessageText</code> are the most used Bot API methods.
 
 <i>&quot;Probably soon, but not today.&quot;</i> — said Telegram on Twitter.
 
-<span class="tg-spoiler"><u>This text is underlined and a spoiler!</u></span>`
-      )
+<span class="tg-spoiler"><u>This text is underlined and a spoiler!</u></span>`,
+  );
 });

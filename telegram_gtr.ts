@@ -5,11 +5,11 @@ import { unparse } from "./utils.ts";
 export class TelegramGTR extends GTR {
   async translate(
     text: string,
-    opts: TranslateOptions & { entities?: MessageEntity[] }
+    opts: TranslateOptions & { entities?: MessageEntity[] },
   ) {
     const result = await super.translate(
       unparse(text, opts.entities ?? []),
-      opts
+      opts,
     );
 
     result.trans = result.trans

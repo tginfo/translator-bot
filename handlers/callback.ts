@@ -3,12 +3,12 @@ import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,
   answerError,
+  escape,
   findLanguage,
   hasButton,
   log,
   removeButton,
   replaceButton,
-  escape
 } from "../utils.ts";
 
 const composer = new Composer();
@@ -17,32 +17,34 @@ export default composer;
 
 const gtr = new TelegramGTR();
 
-const cq = composer.on("callback_query").filter((
-  ctx,
-): ctx is typeof ctx & {
-  chat: NonNullable<typeof ctx["chat"]>;
-  from: NonNullable<typeof ctx["from"]>;
-  callbackQuery: NonNullable<
-    typeof ctx["callbackQuery"] & {
-      message: NonNullable<typeof ctx["callbackQuery"]["message"]> & {
-        reply_markup: NonNullable<
-          NonNullable<
-            typeof ctx["callbackQuery"]["message"]
-          >["reply_markup"]
-        >;
-      };
-    }
-  >;
-} =>
-  !!ctx.chat && !!ctx.from && !!ctx.callbackQuery.message &&
-  !!ctx.callbackQuery.message.reply_markup
+const cq = composer.on("callback_query").filter(
+  (
+    ctx,
+  ): ctx is typeof ctx & {
+    chat: NonNullable<typeof ctx["chat"]>;
+    from: NonNullable<typeof ctx["from"]>;
+    callbackQuery: NonNullable<
+      typeof ctx["callbackQuery"] & {
+        message: NonNullable<typeof ctx["callbackQuery"]["message"]> & {
+          reply_markup: NonNullable<
+            NonNullable<typeof ctx["callbackQuery"]["message"]>["reply_markup"]
+          >;
+        };
+      }
+    >;
+  } =>
+    !!ctx.chat &&
+    !!ctx.from &&
+    !!ctx.callbackQuery.message &&
+    !!ctx.callbackQuery.message.reply_markup,
 );
 
 cq.callbackQuery("translate", async (ctx) => {
   const language = await findLanguage(ctx);
   const text = ctx.callbackQuery.message.text ||
     ctx.callbackQuery.message.caption!;
-  const entities = ctx.callbackQuery.message.entities || ctx.callbackQuery.message.caption_entities;
+  const entities = ctx.callbackQuery.message.entities ||
+    ctx.callbackQuery.message.caption_entities;
 
   let translation;
 
@@ -75,7 +77,7 @@ cq.callbackQuery("translate", async (ctx) => {
     });
 
     await ctx.reply(translation, {
-      parse_mode: 'HTML',
+      parse_mode: "HTML",
       reply_to_message_id: ctx.callbackQuery.message.message_id,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
