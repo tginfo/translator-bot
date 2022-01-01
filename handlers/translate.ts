@@ -29,18 +29,29 @@ composer
     const isAlt = ctx.chat.id == alt;
     const isBeta = betaChannels.includes(ctx.chat.id);
 
-    log(
-      `Received a post [${ctx.channelPost.message_id}] from the ` +
-        (keyChannels.en.includes(ctx.chat.id)
-          ? "English"
-          : keyChannels.ru.includes(ctx.chat.id)
-          ? "Russian"
-          : isAlt
-          ? "alt"
-          : "") +
-        ` ${isBeta ? "beta " : ""}channel.`,
-      "primary",
-    );
+    const postId = `${ctx.channelPost.message_id}-${
+      keyChannels.en.includes(ctx.chat.id)
+        ? "en"
+        : keyChannels.ru.includes(ctx.chat.id)
+        ? "ru"
+        : "alt"
+    }-${isBeta ? "beta" : ""}`;
+
+    const channel =
+      (keyChannels.en.includes(ctx.chat.id)
+        ? "English"
+        : keyChannels.ru.includes(ctx.chat.id)
+        ? "Russian"
+        : "alt") + ` ${isBeta ? "beta " : ""}channel`;
+
+    log(`Received a post from the ${channel}.`, "primary");
+
+    const t1 = Date.now();
+
+    log(`Copying ${postId}...`);
+
+    let s = 0;
+    let f = 0;
 
     for (const id in languages) {
       const language = languages[id];
@@ -52,24 +63,34 @@ composer
       try {
         await ctx.copyMessage(language.edit, {
           reply_markup: new InlineKeyboard()
-          .text("Translate", "translate")
-          .row()
-          .text("Translate (Alt)", "alt-translate")
-          .row()
+            .text("Translate", "translate")
+            .row()
+            .text("Translate (Alt)", "alt-translate")
+            .row()
             .text(
               `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-              `send_${isBeta ? "beta" : "tg"}`,
+              `send_${isBeta ? "beta" : "tg"}`
             )
             .row()
             .text("Idle", `idle`),
         });
 
         log(`Copied ${ctx.channelPost.message_id} to ${id} middle.`, "success");
+
+        s++;
       } catch (err) {
         log(
           `Failed to copy ${ctx.channelPost.message_id} to ${id} middle: ${err}`,
-          "error",
+          "error"
         );
+
+        f++;
       }
     }
+
+    const dt = (Date.now() - t1) / 1000;
+
+    log(
+      `Finished copying ${ctx.channelPost.message_id} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
+    );
   });
