@@ -229,7 +229,7 @@ export function unparse(
 
 export function fixTrans(trans: string) {
   return trans
-    .replace(/< ?a href="(.+)" ?> ?/g, '<a href="$1">')
+    .replace(/< ?a href ?= ?"(.+)" ?> ?/g, '<a href="$1">')
     .replace(/ ?< ?\/ ?a ?>/g, "</a>")
     .replace(/< ?i ?> ?/g, "<i>")
     .replace(/ ?< ?\/ ?i ?>/g, "</i>")
