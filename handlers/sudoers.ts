@@ -1,5 +1,11 @@
 import { Composer, InputFile } from "https://deno.land/x/grammy/mod.ts";
-import { dump, languages, sudoers, updateData } from "../data.ts";
+import {
+  dump,
+  languages,
+  sudoers,
+  update,
+  updateWithFileData,
+} from "../data.ts";
 import { getUserLink, log } from "../utils.ts";
 import { Context } from "../context.ts";
 
@@ -9,7 +15,7 @@ export default composer;
 
 const su = composer.filter(
   (ctx): ctx is typeof ctx & { from: NonNullable<typeof ctx["from"]> } =>
-    !!ctx.from && sudoers.includes(ctx.from.id),
+    !!ctx.from && sudoers.includes(ctx.from.id)
 );
 
 su.command("import", async (ctx) => {
@@ -34,7 +40,7 @@ su.command("import", async (ctx) => {
     return;
   }
 
-  const result = await updateData(data);
+  const result = await updateWithFileData(data);
 
   if (result) {
     await ctx.reply("Data updated.");
@@ -71,7 +77,10 @@ su.command("add", async (ctx) => {
     return;
   }
 
-  languages[id].translators.push(translator);
+  await update((languages) => {
+    languages[id].translators.push(translator);
+  });
+
   log(`Added ${translator} to ${id}.`, "primary");
   await ctx.reply(`Added to ${id}.`);
 });
@@ -94,7 +103,7 @@ su.command("stats", async (ctx) => {
               ? "None"
               : language.translators.map(getUserLink).join(", ")
           }`,
-        { parse_mode: "HTML" },
+        { parse_mode: "HTML" }
       );
     } else {
       await ctx.reply(`Language ${id} not found.`);
@@ -104,11 +113,11 @@ su.command("stats", async (ctx) => {
   }
 
   await ctx.reply(
-    `Sudoers: ${
-      sudoers.map(getUserLink).join(", ")
-    } (${sudoers.length})\n\nLanguages: ${Object.keys(languages).join(", ")} (${
+    `Sudoers: ${sudoers.map(getUserLink).join(", ")} (${
+      sudoers.length
+    })\n\nLanguages: ${Object.keys(languages).join(", ")} (${
       Object.keys(languages).length
     })`,
-    { parse_mode: "HTML" },
+    { parse_mode: "HTML" }
   );
 });

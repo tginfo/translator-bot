@@ -29,7 +29,7 @@ paths = paths.filter((p) => p != "data.json");
 paths.sort(
   (a, b) =>
     Number(a.replace(".json", "").split("-")[1]) -
-    Number(b.replace(".json", "").split("-")[1]),
+    Number(b.replace(".json", "").split("-")[1])
 );
 
 const path = paths.slice(-1)[0] || "data.json";
@@ -50,23 +50,36 @@ export const tginfoen = -1001263222189;
 
 export const betainfoen = -1001335406586;
 
+export async function update(
+  func: (
+    languages: Record<string, Language>,
+    sudoers: Sudoer[]
+  ) => Promise<void> | void
+) {
+  const result = func(languages, sudoers);
+
+  result instanceof Promise && (await result);
+
+  await Deno.writeTextFile(
+    `data-${Date.now()}.json`,
+    JSON.stringify({ languages, sudoers })
+  );
+}
+
 // deno-lint-ignore no-explicit-any
-export async function updateData(data: any) {
+export async function updateWithFileData(data: any) {
   if (typeof data.languages === "object" && Array.isArray(data.sudoers)) {
-    for (const k in data.languages) {
-      languages[k] = data.languages[k];
-    }
+    await update((languages, sudoers) => {
+      for (const k in data.languages) {
+        languages[k] = data.languages[k];
+      }
 
-    sudoers.splice(0, sudoers.length);
+      sudoers.splice(0, sudoers.length);
 
-    for (const sudoer of data.sudoers) {
-      sudoers.push(sudoer);
-    }
-
-    await Deno.writeTextFile(
-      `data-${Date.now()}.json`,
-      JSON.stringify({ languages, sudoers }),
-    );
+      for (const sudoer of data.sudoers) {
+        sudoers.push(sudoer);
+      }
+    });
 
     return true;
   }
