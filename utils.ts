@@ -178,7 +178,9 @@ export function unparse(
     const length_ = entity.length;
     const text_ = unparse(
       text.slice(relativeOffset, relativeOffset + length_),
-      entities.slice(i + 1, entities.length)
+      entities.slice(i + 1, entities.length),
+      entity.offset,
+      length_
     );
 
     switch (entity.type) {
