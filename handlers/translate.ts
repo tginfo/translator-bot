@@ -75,12 +75,12 @@ composer
             .text("Idle", `idle`),
         });
 
-        log(`Copied ${ctx.channelPost.message_id} to ${id} middle.`, "success");
+        log(`Copied ${postId} to ${id} middle.`, "success");
 
         s++;
       } catch (err) {
         log(
-          `Failed to copy ${ctx.channelPost.message_id} to ${id} middle: ${err}`,
+          `Failed to copy ${postId} to ${id} middle: ${err}`,
           "error"
         );
 
@@ -91,6 +91,7 @@ composer
     const dt = (Date.now() - t1) / 1000;
 
     log(
-      `Finished copying ${ctx.channelPost.message_id} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
+      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
+      "success"
     );
   });

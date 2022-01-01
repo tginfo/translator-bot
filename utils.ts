@@ -111,7 +111,7 @@ const variants = {
 };
 
 export function log(text: string, variant: keyof typeof variants = "normal") {
-  text = new Date().toLocaleTimeString().slice(0, -3) + ": " + text;
+  text = '[' + new Date().toLocaleTimeString().slice(0, -3) + "] " + text;
 
   console.log(variants[variant](text));
 }
