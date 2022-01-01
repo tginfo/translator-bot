@@ -19,7 +19,7 @@ const gtr = new TelegramGTR();
 
 const cq = composer.on("callback_query").filter(
   (
-    ctx,
+    ctx
   ): ctx is typeof ctx & {
     chat: NonNullable<typeof ctx["chat"]>;
     from: NonNullable<typeof ctx["from"]>;
@@ -36,14 +36,15 @@ const cq = composer.on("callback_query").filter(
     !!ctx.chat &&
     !!ctx.from &&
     !!ctx.callbackQuery.message &&
-    !!ctx.callbackQuery.message.reply_markup,
+    !!ctx.callbackQuery.message.reply_markup
 );
 
 cq.callbackQuery("translate", async (ctx) => {
   const language = await findLanguage(ctx);
-  const text = ctx.callbackQuery.message.text ||
-    ctx.callbackQuery.message.caption!;
-  const entities = ctx.callbackQuery.message.entities ||
+  const text =
+    ctx.callbackQuery.message.text || ctx.callbackQuery.message.caption!;
+  const entities =
+    ctx.callbackQuery.message.entities ||
     ctx.callbackQuery.message.caption_entities;
 
   let translation;
@@ -59,13 +60,79 @@ cq.callbackQuery("translate", async (ctx) => {
 
     log(
       `Request to Google Translate successful for ${language.id} middle.`,
-      "success",
+      "success"
     );
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
     log(
       `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
-      "warning",
+      "warning"
+    );
+  }
+
+  removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
+
+  try {
+    let failed = false;
+
+    try {
+      await ctx.reply(translation, {
+        parse_mode: "HTML",
+        reply_to_message_id: ctx.callbackQuery.message.message_id,
+        reply_markup: new InlineKeyboard().text("Delete", "delete"),
+      });
+    } catch (_err) {
+      failed = true;
+
+      log(
+        `Could not send translation with formatting in ${language.id} middle.`,
+        "warning"
+      );
+
+      await answer(
+        ctx,
+        "Could not send the translation with formatting. Use the alternative button to get the translation without formatting."
+      );
+
+      return;
+    }
+
+    if (!failed) {
+      removeButton(ctx.callbackQuery.message.reply_markup, "alt-translate");
+    }
+
+    await ctx.editMessageReplyMarkup({
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    });
+  } catch (err) {
+    await answerError(ctx, err);
+  }
+});
+
+cq.callbackQuery("alt-translate", async (ctx) => {
+  const language = await findLanguage(ctx);
+  const text =
+    ctx.callbackQuery.message.text || ctx.callbackQuery.message.caption!;
+
+  let translation;
+
+  try {
+    const result = await gtr.translate(text, {
+      targetLang: language.targetLang ?? language.id,
+      sourceLang: language.from,
+    });
+
+    translation = result.trans;
+
+    log(
+      `Alternative request to Google Translate successful for ${language.id} middle.`,
+      "success"
+    );
+  } catch (err) {
+    translation = `An error occurred while translating.\n\n${escape(err)}`;
+    log(
+      `Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
+      "warning"
     );
   }
 
@@ -77,7 +144,6 @@ cq.callbackQuery("translate", async (ctx) => {
     });
 
     await ctx.reply(translation, {
-      parse_mode: "HTML",
       reply_to_message_id: ctx.callbackQuery.message.message_id,
       reply_markup: new InlineKeyboard().text("Delete", "delete"),
     });
@@ -119,7 +185,7 @@ cq.callbackQuery(/^send/, async (ctx) => {
     ctx.callbackQuery.message.reply_markup,
     ctx.callbackQuery.data,
     (c) => c.replace("Send to", "Edit in"),
-    `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`,
+    `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`
   );
 
   await ctx.editMessageReplyMarkup({
@@ -145,7 +211,7 @@ cq.callbackQuery(/^edit/, async (ctx) => {
         chatId,
         messageId,
         ctx.callbackQuery.message.text,
-        { entities: ctx.callbackQuery.message.entities },
+        { entities: ctx.callbackQuery.message.entities }
       );
     } else {
       await ctx.api.editMessageCaption(chatId, messageId, {
@@ -170,7 +236,7 @@ cq.callbackQuery(/^idle/, async (ctx) => {
       ctx.callbackQuery.message.reply_markup,
       ctx.callbackQuery.data,
       `Idled by ${ctx.from.first_name}`,
-      `idle_${ctx.from.id}`,
+      `idle_${ctx.from.id}`
     );
 
     await ctx.editMessageReplyMarkup({
@@ -183,7 +249,7 @@ cq.callbackQuery(/^idle/, async (ctx) => {
     ctx.callbackQuery.message.reply_markup,
     ctx.callbackQuery.data,
     `Idle`,
-    `idle`,
+    `idle`
   );
 
   await ctx.editMessageReplyMarkup({
