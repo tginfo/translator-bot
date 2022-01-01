@@ -46,7 +46,7 @@ Deno.test("escape", () => {
 
   assertEquals(
     escaped,
-    "&lt;a href=\"https://tginfo.me\"&gt;Telegram Info&lt;/a&gt;"
+    "&lt;a href=&quot;https://tginfo.me&quot;&gt;Telegram Info&lt;/a&gt;"
   );
 });
 
@@ -82,7 +82,7 @@ This text is underlined and a spoiler!`;
 
   — <code>sendMessage</code> and <code>editMessageText</code> are the most used Bot API methods.
 
-<i>"Probably soon, but not today."</i> — said Telegram on Twitter.
+<i>&quot;Probably soon, but not today.&quot;</i> — said Telegram on Twitter.
 
 <span class="tg-spoiler"><u>This text is underlined and a spoiler!</u></span>`
       )
