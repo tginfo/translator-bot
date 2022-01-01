@@ -9,6 +9,7 @@ import {
   removeButton,
   replaceButton,
   unparse,
+  fixTrans,
 } from "./utils.ts";
 
 Deno.test("removeButton", () => {
@@ -46,13 +47,12 @@ Deno.test("escape", () => {
 
   assertEquals(
     escaped,
-    "&lt;a href=&quot;https://tginfo.me&quot;&gt;Telegram Info&lt;/a&gt;",
+    "&lt;a href=&quot;https://tginfo.me&quot;&gt;Telegram Info&lt;/a&gt;"
   );
 });
 
 Deno.test("unparse", () => {
-  const text =
-    `Pavel Durov is the luckiest Russian ever according to this a>ticle.
+  const text = `Pavel Durov is the luckiest Russian ever according to this a>ticle.
 
   — sendMessage and editMessageText are the most used Bot API methods.
 
@@ -85,6 +85,15 @@ This text is underlined and a spoiler!`;
 
 <i>&quot;Probably soon, but not today.&quot;</i> — said Telegram on Twitter.
 
-<span class="tg-spoiler"><u>This text is underlined and a spoiler!</u></span>`,
+<span class="tg-spoiler"><u>This text is underlined and a spoiler!</u></span>`
   );
+});
+
+Deno.test("fixTrans", () => {
+  const trans = `< b>Lê em ji wan re gotin:< / b> < i >&quot; Ma hûn nizanîbû ku Telegramê zêdetir rêzê li bikarînerên xwe digire? < a href = "https://telegram.org" >Herin aniha dakişînin!< /a>&quot;</i >`;
+
+  const result = fixTrans(trans);
+  const expected = `<b>Lê em ji wan re gotin:</b> <i>&quot; Ma hûn nizanîbû ku Telegramê zêdetir rêzê li bikarînerên xwe digire? <a href="https://telegram.org">Herin aniha dakişînin!</a>&quot;</i>`;
+
+  assertEquals(result, expected);
 });
