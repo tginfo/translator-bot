@@ -194,7 +194,7 @@ export function unparse(
         html.push(`<u>${text_}</u>`);
         break;
       case "strikethrough":
-        html.push(`<strike>${text_}</strike>`);
+        html.push(`<s>${text_}</s>`);
         break;
       case "text_link":
         html.push(`<a href="${entity.url}">${text_}</a>`);
