@@ -227,16 +227,10 @@ export function unparse(
   return html.join("");
 }
 
-const allTags = ["b", "i", "u", "s", "a", "span", "code", "pre"];
-const noArgTags = ["b", "i", "u", "s", "code", "pre"];
-
 export function fixTrans(trans: string) {
-  for (const tag of noArgTags) {
-    trans = trans.replace(new RegExp(`< ?${tag} ?> ?`), `<${tag}>`);
-  }
-
-  for (const tag of allTags) {
-    trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`), `</${tag}>`);
+  for (const tag of ["b", "i", "u", "s", "a", "span", "code", "pre"]) {
+    trans = trans.replace(new RegExp(`< ?${tag} ?> ?`, 'g'), `<${tag}>`);
+    trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`, 'g'), `</${tag}>`);
   }
 
   trans = trans.replace(/< ?a href ?= ?"(.+)" ?> ?/g, '<a href="$1">');
