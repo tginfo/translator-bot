@@ -227,14 +227,23 @@ export function unparse(
   return html.join("");
 }
 
+const allTags = ["b", "i", "u", "s", "a", "span", "code", "pre"];
+const noArgTags = ["b", "i", "u", "s", "code", "pre"];
+
 export function fixTrans(trans: string) {
-  return trans
-    .replace(/< ?a href ?= ?"(.+)" ?> ?/g, '<a href="$1">')
-    .replace(/ ?< ?\/ ?a ?>/g, "</a>")
-    .replace(/< ?i ?> ?/g, "<i>")
-    .replace(/ ?< ?\/ ?i ?>/g, "</i>")
-    .replace(/< ?b ?> ?/g, "<b>")
-    .replace(/ ?< ?\/ ?b ?>/g, "</b>")
-    .replace(/< ?code ?> ?/g, "<code>")
-    .replace(/ ?< ?\/ ?code ?>/g, "</code>");
+  for (const tag of noArgTags) {
+    trans = trans.replace(new RegExp(`< ?${tag} ?> ?`), `<${tag}>`);
+  }
+
+  for (const tag of allTags) {
+    trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`), `</${tag}>`);
+  }
+
+  trans = trans.replace(/< ?a href ?= ?"(.+)" ?> ?/g, '<a href="$1">');
+
+  trans = trans.replace(/< ?span class ?= ?"(.+)" ?> ?/g, '<span class="$1">');
+
+  trans = trans.replace(/< ?pre class ?= ?"(.+)" ?> ?/g, '<pre class="$1">');
+
+  return trans;
 }
