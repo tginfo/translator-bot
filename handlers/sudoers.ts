@@ -121,3 +121,51 @@ su.command("stats", async (ctx) => {
     { parse_mode: "HTML" }
   );
 });
+
+su.command("broadcast", async (ctx) => {
+  const message = ctx.message.reply_to_message;
+
+  if (!message) {
+    await ctx.reply("Reply a message to broadcast.");
+    return;
+  }
+
+  const messageId = `message ${message.message_id} of chat ${ctx.chat.id}`;
+
+  log(`Broadcasting ${messageId}...`, "primary");
+
+  const t1 = Date.now();
+  let s = 0;
+  let f = 0;
+
+  for (const id in languages) {
+    const language = languages[id];
+
+    try {
+      await ctx.api.forwardMessage(
+        language.edit,
+        ctx.chat.id,
+        message.message_id
+      );
+
+      log(`Forwarded ${messageId} to ${id} middle.`, "success");
+
+      s++;
+    } catch (err) {
+      log(`Failed to forward ${messageId} to ${id} middle: ${err}`, "error");
+
+      f++;
+    }
+  }
+
+  const dt = (Date.now() - t1) / 1000;
+
+  log(
+    `Finished broadcasting ${messageId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
+    "primary"
+  );
+
+  await ctx.reply(
+    `Broadcast complete.\nFailed forwards: ${f}\nSucceeded forwards: ${s}\nTime elapsed: ${dt}s`
+  );
+});

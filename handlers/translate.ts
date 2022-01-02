@@ -45,11 +45,9 @@ composer
         : "alt") + ` ${isBeta ? "beta " : ""}channel`;
 
     log(`Received a post from the ${channel}.`, "primary");
+    log(`Copying ${postId}...`, "primary");
 
     const t1 = Date.now();
-
-    log(`Copying ${postId}...`);
-
     let s = 0;
     let f = 0;
 
@@ -92,6 +90,6 @@ composer
 
     log(
       `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
-      "success"
+      "primary"
     );
   });
