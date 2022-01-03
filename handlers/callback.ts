@@ -76,11 +76,16 @@ cq.callbackQuery("translate", async (ctx) => {
     let failed = false;
 
     try {
-      await ctx.reply(translation, {
-        parse_mode: "HTML",
-        reply_to_message_id: ctx.callbackQuery.message.message_id,
-        reply_markup: new InlineKeyboard().text("Delete", "delete"),
-      });
+      const other = {
+        parse_mode: "HTML" as "HTML",
+        reply_markup: ctx.callbackQuery.message.reply_markup,
+      };
+
+      if (ctx.callbackQuery.message.text != undefined) {
+        await ctx.editMessageText(translation, other);
+      } else {
+        await ctx.editMessageCaption({ caption: translation, ...other });
+      }
     } catch (_err) {
       failed = true;
 
@@ -99,11 +104,17 @@ cq.callbackQuery("translate", async (ctx) => {
 
     if (!failed) {
       removeButton(ctx.callbackQuery.message.reply_markup, "alt-translate");
-    }
 
-    await ctx.editMessageReplyMarkup({
-      reply_markup: ctx.callbackQuery.message.reply_markup,
-    });
+      await ctx.editMessageReplyMarkup({
+        reply_markup: ctx.callbackQuery.message.reply_markup,
+      });
+
+      await ctx.reply(text, {
+        entities,
+        reply_to_message_id: ctx.callbackQuery.message.message_id,
+        reply_markup: new InlineKeyboard().text("Delete", "delete"),
+      });
+    }
   } catch (err) {
     await answerError(ctx, err);
   }
