@@ -63,8 +63,6 @@ composer
           reply_markup: new InlineKeyboard()
             .text("Translate", "translate")
             .row()
-            .text("Translate (Alt)", "alt-translate")
-            .row()
             .text(
               `Send to ${isBeta ? "Beta" : "Main"} Channel`,
               `send_${isBeta ? "beta" : "tg"}`
