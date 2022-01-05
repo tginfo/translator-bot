@@ -90,12 +90,12 @@ su.command("rm", async (ctx) => {
     /target language: (..)/i
   )![1];
 
-  const translators = ctx.message.text
+  const translatorsToRemove = ctx.message.text
     .split(/\s/)
     .map(Number)
     .filter((t) => t);
 
-  if (!id || translators.length == 0) {
+  if (!id || translatorsToRemove.length == 0) {
     await ctx.reply(
       "Reply to the stats message and pass the IDs of the translators."
     );
@@ -109,14 +109,26 @@ su.command("rm", async (ctx) => {
     return;
   }
 
+  const newTranslators = language.translators.filter(
+    (t) => !translatorsToRemove.includes(t)
+  );
+
+  const diff = language.translators.length - newTranslators.length;
+
+  const diffText =
+    (diff == 1 ? "a" : diff) + " " + "translator" + (diff == 1 ? "" : "s");
+
+  if (diff == 0) {
+    await ctx.reply(`No changes were made.`);
+    return;
+  }
+
   await update((languages) => {
-    languages[id].translators = languages[id].translators.filter(
-      (t) => !translators.includes(t)
-    );
+    languages[id].translators = newTranslators;
   });
 
-  log(`Updated ${id}.`, "primary");
-  await ctx.reply(`Updated ${id}.`);
+  log(`Removed ${diffText} from ${id}.`, "primary");
+  await ctx.reply(`Removed ${diffText} from ${id}.`);
 });
 
 su.command("stats", async (ctx) => {
