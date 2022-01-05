@@ -28,7 +28,7 @@ su.command("import", async (ctx) => {
 
   const url = (await ctx.api.getFile(document.file_id)).getUrl();
 
-  log(`Received a request to update data.`, "primary");
+  log("Received a request to update data.", "primary");
 
   let data;
 
@@ -44,12 +44,12 @@ su.command("import", async (ctx) => {
 
   if (result) {
     await ctx.reply("Data updated.");
-    log(`Data updated.`, "primary");
+    log("Data updated.", "primary");
     return;
   }
 
   await ctx.reply("Data not updated.");
-  log(`Data not updated.`, "primary");
+  log("Data not updated.", "primary");
 });
 
 su.command("export", (ctx) => {
@@ -119,7 +119,7 @@ su.command("rm", async (ctx) => {
     (diff == 1 ? "a" : diff) + " " + "translator" + (diff == 1 ? "" : "s");
 
   if (diff == 0) {
-    await ctx.reply(`No changes were made.`);
+    await ctx.reply("No changes were made.");
     return;
   }
 
