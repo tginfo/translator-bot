@@ -85,6 +85,40 @@ su.command("add", async (ctx) => {
   await ctx.reply(`Added to ${id}.`);
 });
 
+su.command("rm", async (ctx) => {
+  const id = ctx.message.reply_to_message?.text?.match(
+    /target language: (..)/i
+  )![1];
+
+  const translators = ctx.message.text
+    .split(/\s/)
+    .map(Number)
+    .filter((t) => t);
+
+  if (!id || translators.length == 0) {
+    await ctx.reply(
+      "Reply to the stats message and pass the IDs of the translators."
+    );
+    return;
+  }
+
+  const language = languages[id];
+
+  if (typeof language === "undefined") {
+    await ctx.reply(`Language ${id} not found.`);
+    return;
+  }
+
+  await update((languages) => {
+    languages[id].translators = languages[id].translators.filter(
+      (t) => !translators.includes(t)
+    );
+  });
+
+  log(`Updated ${id}.`, "primary");
+  await ctx.reply(`Updated ${id}.`);
+});
+
 su.command("stats", async (ctx) => {
   const id = ctx.message.text.split(/\s/)[1];
 
