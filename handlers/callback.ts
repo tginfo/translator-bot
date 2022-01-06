@@ -77,7 +77,7 @@ cq.callbackQuery("translate", async (ctx) => {
 
     try {
       const other = {
-        parse_mode: "HTML" as "HTML",
+        parse_mode: "HTML" as const,
         reply_markup: {
           inline_keyboard: [
             [{ text: "Translate (Alt)", callback_data: "alt-translate" }],
