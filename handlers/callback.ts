@@ -78,12 +78,6 @@ cq.callbackQuery("translate", async (ctx) => {
     try {
       const other = {
         parse_mode: "HTML" as const,
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "Translate (Alt)", callback_data: "alt-translate" }],
-            ...ctx.callbackQuery.message.reply_markup.inline_keyboard,
-          ],
-        },
       };
 
       if (ctx.callbackQuery.message.text != undefined) {
@@ -103,21 +97,22 @@ cq.callbackQuery("translate", async (ctx) => {
         ctx,
         "Could not send the translation with formatting. Use the alternative button to get the translation without formatting."
       );
-
-      return;
     }
 
     if (!failed) {
-      removeButton(ctx.callbackQuery.message.reply_markup, "alt-translate");
-
-      await ctx.editMessageReplyMarkup({
-        reply_markup: ctx.callbackQuery.message.reply_markup,
-      });
-
       await ctx.reply(text, {
         entities,
         reply_to_message_id: ctx.callbackQuery.message.message_id,
         reply_markup: new InlineKeyboard().text("Delete", "delete"),
+      });
+    } else {
+      await ctx.editMessageReplyMarkup({
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Translate (Alt)", callback_data: "alt-translate" }],
+            ...ctx.callbackQuery.message.reply_markup.inline_keyboard,
+          ],
+        },
       });
     }
   } catch (err) {
