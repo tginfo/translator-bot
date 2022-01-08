@@ -16,7 +16,7 @@ const formatter = (logRecord: LogRecord) => {
 
 await log.setup({
   handlers: {
-    console: new log.handlers.ConsoleHandler("DEBUG", {
+    console: new log.handlers.ConsoleHandler("NOTSET", {
       formatter,
     }),
     file: new log.handlers.FileHandler("NOTSET", {
