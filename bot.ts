@@ -3,11 +3,13 @@ import {
   info,
   warning,
 } from "https://deno.land/std@0.119.0/log/mod.ts";
+
 import { Bot } from "https://deno.land/x/grammy/mod.ts";
 import { hydrateFiles } from "https://deno.land/x/grammy_files/mod.ts";
+
 import { Context } from "./context.ts";
-import handlers from "./handlers/mod.ts";
 import env from "./env.ts";
+import handlers from "./handlers/mod.ts";
 
 const bot = new Bot<Context>(env.BOT_TOKEN);
 

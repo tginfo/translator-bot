@@ -1,5 +1,7 @@
 import { GTR, TranslateOptions } from "https://deno.land/x/gtr/mod.ts";
+
 import { MessageEntity } from "https://cdn.skypack.dev/@grammyjs/types@v2.5.0?dts";
+
 import { fixTrans, unparse } from "./utils.ts";
 
 export class TelegramGTR extends GTR {

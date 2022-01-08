@@ -1,5 +1,6 @@
 import * as log from "https://deno.land/std@0.119.0/log/mod.ts";
 import { LogRecord } from "https://deno.land/std@0.119.0/log/mod.ts";
+
 import env from "./env.ts";
 
 const formatter = (logRecord: LogRecord) => {

@@ -1,5 +1,7 @@
 import { error, info, warning } from "https://deno.land/std@0.119.0/log/mod.ts";
+
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
+
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,

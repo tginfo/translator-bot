@@ -1,5 +1,8 @@
 import { error, info, warning } from "https://deno.land/std@0.119.0/log/mod.ts";
+
 import { Composer, InputFile } from "https://deno.land/x/grammy/mod.ts";
+
+import { Context } from "../context.ts";
 import {
   dump,
   languages,
@@ -8,7 +11,6 @@ import {
   updateWithFileData,
 } from "../data.ts";
 import { getUserLink } from "../utils.ts";
-import { Context } from "../context.ts";
 
 const composer = new Composer<Context>();
 
