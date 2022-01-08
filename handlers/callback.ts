@@ -1,3 +1,4 @@
+import { info, warning, error } from "https://deno.land/std@0.119.0/log/mod.ts";
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
@@ -6,7 +7,6 @@ import {
   escape,
   findLanguage,
   hasButton,
-  log,
   removeButton,
   replaceButton,
 } from "../utils.ts";
@@ -58,15 +58,11 @@ cq.callbackQuery("translate", async (ctx) => {
 
     translation = result.trans;
 
-    log(
-      `Request to Google Translate successful for ${language.id} middle.`,
-      "success"
-    );
+    info(`Request to Google Translate successful for ${language.id} middle.`);
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
-    log(
-      `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
-      "warning"
+    warning(
+      `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`
     );
   }
 
@@ -88,9 +84,8 @@ cq.callbackQuery("translate", async (ctx) => {
     } catch (_err) {
       failed = true;
 
-      log(
-        `Could not send translation with formatting in ${language.id} middle.`,
-        "warning"
+      warning(
+        `Could not send translation with formatting in ${language.id} middle.`
       );
 
       await answer(
@@ -135,15 +130,13 @@ cq.callbackQuery("alt-translate", async (ctx) => {
 
     translation = result.trans;
 
-    log(
+    info(
       `Alternative request to Google Translate successful for ${language.id} middle.`,
-      "success"
     );
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
-    log(
+    warning(
       `Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
-      "warning"
     );
   }
 
@@ -183,10 +176,10 @@ cq.callbackQuery(/^send/, async (ctx) => {
 
   try {
     message = await ctx.copyMessage(chatId);
-    log(`Sending successful in ${language.id} middle.`, "success");
+    info(`Sending successful in ${language.id} middle.`);
   } catch (err) {
     await answerError(ctx, err);
-    log(`Sending unsuccessful in ${language.id} middle: ${err}`, "error");
+    error(`Sending unsuccessful in ${language.id} middle: ${err}`);
     return;
   }
 
@@ -231,10 +224,10 @@ cq.callbackQuery(/^edit/, async (ctx) => {
       });
     }
 
-    log(`Editing successful in ${language.id} middle.`, "success");
+    info(`Editing successful in ${language.id} middle.`);
   } catch (err) {
     await answerError(ctx, err);
-    log(`Editing unsuccessful in ${language.id} middle.`, "warning");
+    warning(`Editing unsuccessful in ${language.id} middle.`);
     return;
   }
 });

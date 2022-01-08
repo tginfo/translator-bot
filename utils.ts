@@ -1,11 +1,3 @@
-import {
-  bgBlue,
-  bgGreen,
-  bgRed,
-  bgWhite,
-  bgYellow,
-  black,
-} from "https://deno.land/std@0.119.0/fmt/colors.ts";
 import { Context, GrammyError } from "https://deno.land/x/grammy/mod.ts";
 import {
   InlineKeyboardButton,
@@ -99,21 +91,6 @@ export function replaceButton(
       }
     }
   }
-}
-
-const variants = {
-  normal: (str: string) => str,
-  primary: (str: string) => bgBlue(black(str)),
-  secondary: (str: string) => bgWhite(black(str)),
-  success: (str: string) => bgGreen(black(str)),
-  warning: (str: string) => bgYellow(black(str)),
-  error: (str: string) => bgRed(black(str)),
-};
-
-export function log(text: string, variant: keyof typeof variants = "normal") {
-  text = '[' + new Date().toLocaleTimeString().slice(0, -3) + "] " + text;
-
-  console.log(variants[variant](text));
 }
 
 export function hasButton(
@@ -229,8 +206,8 @@ export function unparse(
 
 export function fixTrans(trans: string) {
   for (const tag of ["b", "i", "u", "s", "a", "span", "code", "pre"]) {
-    trans = trans.replace(new RegExp(`< ?${tag} ?> ?`, 'g'), `<${tag}>`);
-    trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`, 'g'), `</${tag}>`);
+    trans = trans.replace(new RegExp(`< ?${tag} ?> ?`, "g"), `<${tag}>`);
+    trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`, "g"), `</${tag}>`);
   }
 
   trans = trans.replace(/< ?a href ?= ?"(.+)" ?> ?/g, '<a href="$1">');

@@ -1,5 +1,5 @@
+import { info, warning, error } from "https://deno.land/std@0.119.0/log/mod.ts";
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
-import { log } from "../utils.ts";
 import {
   alt,
   betainfo,
@@ -44,8 +44,8 @@ composer
         ? "Russian"
         : "alt") + ` ${isBeta ? "beta " : ""}channel`;
 
-    log(`Received a post from the ${channel}.`, "primary");
-    log(`Copying ${postId}...`, "primary");
+    info(`Received a post from the ${channel}.`);
+    info(`Copying ${postId}...`);
 
     const t1 = Date.now();
     let s = 0;
@@ -71,14 +71,11 @@ composer
             .text("Idle", `idle`),
         });
 
-        log(`Copied ${postId} to ${id} middle.`, "success");
+        info(`Copied ${postId} to ${id} middle.`);
 
         s++;
       } catch (err) {
-        log(
-          `Failed to copy ${postId} to ${id} middle: ${err}`,
-          "error"
-        );
+        error(`Failed to copy ${postId} to ${id} middle: ${err}`);
 
         f++;
       }
@@ -86,8 +83,7 @@ composer
 
     const dt = (Date.now() - t1) / 1000;
 
-    log(
-      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
-      "primary"
+    info(
+      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
     );
   });

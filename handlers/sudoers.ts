@@ -1,3 +1,4 @@
+import { info, warning, error } from "https://deno.land/std@0.119.0/log/mod.ts";
 import { Composer, InputFile } from "https://deno.land/x/grammy/mod.ts";
 import {
   dump,
@@ -6,7 +7,7 @@ import {
   update,
   updateWithFileData,
 } from "../data.ts";
-import { getUserLink, log } from "../utils.ts";
+import { getUserLink } from "../utils.ts";
 import { Context } from "../context.ts";
 
 const composer = new Composer<Context>();
@@ -28,7 +29,7 @@ su.command("import", async (ctx) => {
 
   const url = (await ctx.api.getFile(document.file_id)).getUrl();
 
-  log("Received a request to update data.", "primary");
+  info("Received a request to update data.");
 
   let data;
 
@@ -36,7 +37,7 @@ su.command("import", async (ctx) => {
     data = await (await fetch(url)).json();
   } catch (err) {
     await ctx.reply(`An error occurred.\n\n${err}`);
-    log(`Failed to fetch the URL: ${err}`, "warning");
+    warning(`Failed to fetch the URL: ${err}`);
     return;
   }
 
@@ -44,12 +45,12 @@ su.command("import", async (ctx) => {
 
   if (result) {
     await ctx.reply("Data updated.");
-    log("Data updated.", "primary");
+    info("Data updated.");
     return;
   }
 
   await ctx.reply("Data not updated.");
-  log("Data not updated.", "primary");
+  info("Data not updated.");
 });
 
 su.command("export", (ctx) => {
@@ -81,7 +82,7 @@ su.command("add", async (ctx) => {
     languages[id].translators.push(translator);
   });
 
-  log(`Added ${translator} to ${id}.`, "primary");
+  info(`Added ${translator} to ${id}.`);
   await ctx.reply(`Added to ${id}.`);
 });
 
@@ -127,7 +128,7 @@ su.command("rm", async (ctx) => {
     languages[id].translators = newTranslators;
   });
 
-  log(`Removed ${diffText} from ${id}.`, "primary");
+  info(`Removed ${diffText} from ${id}.`);
   await ctx.reply(`Removed ${diffText} from ${id}.`);
 });
 
@@ -178,7 +179,7 @@ su.command("broadcast", async (ctx) => {
 
   const messageId = `message ${message.message_id} of chat ${ctx.chat.id}`;
 
-  log(`Broadcasting ${messageId}...`, "primary");
+  info(`Broadcasting ${messageId}...`);
 
   const t1 = Date.now();
   let s = 0;
@@ -194,11 +195,11 @@ su.command("broadcast", async (ctx) => {
         message.message_id
       );
 
-      log(`Forwarded ${messageId} to ${id} middle.`, "success");
+      info(`Forwarded ${messageId} to ${id} middle.`);
 
       s++;
     } catch (err) {
-      log(`Failed to forward ${messageId} to ${id} middle: ${err}`, "error");
+      error(`Failed to forward ${messageId} to ${id} middle: ${err}`);
 
       f++;
     }
@@ -206,9 +207,8 @@ su.command("broadcast", async (ctx) => {
 
   const dt = (Date.now() - t1) / 1000;
 
-  log(
-    `Finished broadcasting ${messageId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
-    "primary"
+  info(
+    `Finished broadcasting ${messageId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
   );
 
   await ctx.reply(
