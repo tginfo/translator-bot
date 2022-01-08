@@ -28,4 +28,6 @@ export const start = async () => {
   }
 
   info("The bot is running.");
+
+  await bot.start();
 };
