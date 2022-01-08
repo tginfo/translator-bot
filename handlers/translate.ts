@@ -1,4 +1,4 @@
-import { info, warning, error } from "https://deno.land/std@0.119.0/log/mod.ts";
+import { error, info, warning } from "https://deno.land/std@0.119.0/log/mod.ts";
 import { Composer, InlineKeyboard } from "https://deno.land/x/grammy/mod.ts";
 import {
   alt,
@@ -37,12 +37,15 @@ composer
         : "alt"
     }-${isBeta ? "beta" : ""}`;
 
-    const channel =
-      (keyChannels.en.includes(ctx.chat.id)
-        ? "English"
-        : keyChannels.ru.includes(ctx.chat.id)
-        ? "Russian"
-        : "alt") + ` ${isBeta ? "beta " : ""}channel`;
+    const channel = (keyChannels.en.includes(ctx.chat.id)
+      ? "English"
+      : keyChannels.ru.includes(ctx.chat.id)
+      ? "Russian"
+      : "alt") + ` ${
+      isBeta
+        ? "beta "
+        : ""
+    }channel`;
 
     info(`Received a post from the ${channel}.`);
     info(`Copying ${postId}...`);
@@ -65,7 +68,7 @@ composer
             .row()
             .text(
               `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-              `send_${isBeta ? "beta" : "tg"}`
+              `send_${isBeta ? "beta" : "tg"}`,
             )
             .row()
             .text("Idle", `idle`),
@@ -84,6 +87,6 @@ composer
     const dt = (Date.now() - t1) / 1000;
 
     info(
-      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
+      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
     );
   });
