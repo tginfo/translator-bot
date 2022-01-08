@@ -12,17 +12,17 @@ const formatter = (logRecord: LogRecord) => {
 export const setup = () =>
   log.setup({
     handlers: {
-      console: new log.handlers.ConsoleHandler("NOTSET", {
+      console: new log.handlers.ConsoleHandler("DEBUG", {
         formatter,
       }),
-      file: new log.handlers.FileHandler("NOTSET", {
+      file: new log.handlers.FileHandler("DEBUG", {
         filename: env.LOG_FILE,
         formatter,
       }),
     },
     loggers: {
       default: {
-        level: "NOTSET",
+        level: "DEBUG",
         handlers: ["console", "file"],
       },
     },

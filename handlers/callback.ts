@@ -21,7 +21,7 @@ const gtr = new TelegramGTR();
 
 const cq = composer.on("callback_query").filter(
   (
-    ctx,
+    ctx
   ): ctx is typeof ctx & {
     chat: NonNullable<typeof ctx["chat"]>;
     from: NonNullable<typeof ctx["from"]>;
@@ -38,14 +38,15 @@ const cq = composer.on("callback_query").filter(
     !!ctx.chat &&
     !!ctx.from &&
     !!ctx.callbackQuery.message &&
-    !!ctx.callbackQuery.message.reply_markup,
+    !!ctx.callbackQuery.message.reply_markup
 );
 
 cq.callbackQuery("translate", async (ctx) => {
   const language = await findLanguage(ctx);
-  const text = ctx.callbackQuery.message.text ||
-    ctx.callbackQuery.message.caption!;
-  const entities = ctx.callbackQuery.message.entities ||
+  const text =
+    ctx.callbackQuery.message.text || ctx.callbackQuery.message.caption!;
+  const entities =
+    ctx.callbackQuery.message.entities ||
     ctx.callbackQuery.message.caption_entities;
 
   let translation;
@@ -63,7 +64,7 @@ cq.callbackQuery("translate", async (ctx) => {
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
     warning(
-      `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
+      `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`
     );
   }
 
@@ -75,6 +76,7 @@ cq.callbackQuery("translate", async (ctx) => {
     try {
       const other = {
         parse_mode: "HTML" as const,
+        reply_markup: ctx.callbackQuery.message.reply_markup,
       };
 
       if (ctx.callbackQuery.message.text != undefined) {
@@ -86,12 +88,12 @@ cq.callbackQuery("translate", async (ctx) => {
       failed = true;
 
       warning(
-        `Could not send translation with formatting in ${language.id} middle.`,
+        `Could not send translation with formatting in ${language.id} middle.`
       );
 
       await answer(
         ctx,
-        "Could not send the translation with formatting. Use the alternative button to get the translation without formatting.",
+        "Could not send the translation with formatting. Use the alternative button to get the translation without formatting."
       );
     }
 
@@ -118,8 +120,8 @@ cq.callbackQuery("translate", async (ctx) => {
 
 cq.callbackQuery("alt-translate", async (ctx) => {
   const language = await findLanguage(ctx);
-  const text = ctx.callbackQuery.message.text ||
-    ctx.callbackQuery.message.caption!;
+  const text =
+    ctx.callbackQuery.message.text || ctx.callbackQuery.message.caption!;
 
   let translation;
 
@@ -132,12 +134,12 @@ cq.callbackQuery("alt-translate", async (ctx) => {
     translation = result.trans;
 
     info(
-      `Alternative request to Google Translate successful for ${language.id} middle.`,
+      `Alternative request to Google Translate successful for ${language.id} middle.`
     );
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
     warning(
-      `Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
+      `Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`
     );
   }
 
@@ -190,7 +192,7 @@ cq.callbackQuery(/^send/, async (ctx) => {
     ctx.callbackQuery.message.reply_markup,
     ctx.callbackQuery.data,
     (c) => c.replace("Send to", "Edit in"),
-    `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`,
+    `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`
   );
 
   await ctx.editMessageReplyMarkup({
@@ -216,7 +218,7 @@ cq.callbackQuery(/^edit/, async (ctx) => {
         chatId,
         messageId,
         ctx.callbackQuery.message.text,
-        { entities: ctx.callbackQuery.message.entities },
+        { entities: ctx.callbackQuery.message.entities }
       );
     } else {
       await ctx.api.editMessageCaption(chatId, messageId, {
@@ -241,7 +243,7 @@ cq.callbackQuery(/^idle/, async (ctx) => {
       ctx.callbackQuery.message.reply_markup,
       ctx.callbackQuery.data,
       `Idled by ${ctx.from.first_name}`,
-      `idle_${ctx.from.id}`,
+      `idle_${ctx.from.id}`
     );
 
     await ctx.editMessageReplyMarkup({
@@ -254,7 +256,7 @@ cq.callbackQuery(/^idle/, async (ctx) => {
     ctx.callbackQuery.message.reply_markup,
     ctx.callbackQuery.data,
     `Idle`,
-    `idle`,
+    `idle`
   );
 
   await ctx.editMessageReplyMarkup({
