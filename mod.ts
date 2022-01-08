@@ -20,7 +20,7 @@ await log.setup({
       formatter,
     }),
     file: new log.handlers.FileHandler("NOTSET", {
-      filename: "./log.txt",
+      filename: env.LOG_FILE,
       formatter,
     }),
   },
