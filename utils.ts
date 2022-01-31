@@ -30,10 +30,10 @@ export async function findLanguage(
   ctx: Context & {
     chat: NonNullable<Context["chat"]>;
     from: NonNullable<Context["from"]>;
-  },
+  }
 ): Promise<Language & { id: string }> {
   const filteredLanguage = Object.entries(languages).filter(
-    ([_, { edit }]) => edit == ctx.chat.id,
+    ([_, { edit }]) => edit == ctx.chat.id
   )[0];
 
   if (typeof filteredLanguage === "undefined") {
@@ -53,13 +53,12 @@ export async function findLanguage(
 
 export function removeButton(
   replyMarkup: InlineKeyboardMarkup,
-  callbackData: string,
+  callbackData: string
 ) {
   for (const x in replyMarkup.inline_keyboard) {
     for (const y in replyMarkup.inline_keyboard[x]) {
       if (
-        (<InlineKeyboardButton.CallbackButton> replyMarkup
-          .inline_keyboard[x][y])
+        (<InlineKeyboardButton.CallbackButton>replyMarkup.inline_keyboard[x][y])
           .callback_data == callbackData
       ) {
         delete replyMarkup.inline_keyboard[x][y];
@@ -67,12 +66,12 @@ export function removeButton(
     }
 
     replyMarkup.inline_keyboard[x] = replyMarkup.inline_keyboard[x].filter(
-      (y) => y,
+      (y) => y
     );
   }
 
   replyMarkup.inline_keyboard = replyMarkup.inline_keyboard.filter(
-    (x) => x.length != 0,
+    (x) => x.length != 0
   );
 }
 
@@ -80,13 +79,13 @@ export function replaceButton(
   replyMarkup: InlineKeyboardMarkup,
   currentCallbackData: string,
   newText: string | ((current: string) => string),
-  newCallbackData: string,
+  newCallbackData: string
 ) {
   for (const i in replyMarkup.inline_keyboard) {
     const x = replyMarkup.inline_keyboard[i];
 
     for (const i in x) {
-      const y = <InlineKeyboardButton.CallbackButton> x[i];
+      const y = <InlineKeyboardButton.CallbackButton>x[i];
 
       if (y.callback_data == currentCallbackData) {
         y.text = typeof newText === "string" ? newText : newText(y.text);
@@ -98,13 +97,13 @@ export function replaceButton(
 
 export function hasButton(
   { inline_keyboard }: InlineKeyboardMarkup,
-  callbackData: string,
+  callbackData: string
 ) {
   for (const i in inline_keyboard) {
     const x = inline_keyboard[i];
 
     for (const i in x) {
-      const y = <InlineKeyboardButton.CallbackButton> x[i];
+      const y = <InlineKeyboardButton.CallbackButton>x[i];
 
       if (y.callback_data.includes(callbackData)) {
         return true;
@@ -133,7 +132,7 @@ export function unparse(
   text: string,
   entities: MessageEntity[],
   offset = 0,
-  length?: number,
+  length?: number
 ): string {
   if (!text) return text;
   else if (entities.length == 0) return escape(text);
@@ -160,7 +159,7 @@ export function unparse(
       text.slice(relativeOffset, relativeOffset + length_),
       entities.slice(i + 1, entities.length),
       entity.offset,
-      length_,
+      length_
     );
 
     switch (entity.type) {
@@ -192,7 +191,7 @@ export function unparse(
         html.push(
           `<pre${
             entity.language && ` class="${entity.language}"`
-          }>${text_}</pre>`,
+          }>${text_}</pre>`
         );
         break;
       default:
@@ -207,7 +206,7 @@ export function unparse(
   return html.join("");
 }
 
-export function fixTrans(trans: string) {
+export function fixTrans(trans: string, isZh?: boolean) {
   for (const tag of ["b", "i", "u", "s", "a", "span", "code", "pre"]) {
     trans = trans.replace(new RegExp(`< ?${tag} ?> ?`, "g"), `<${tag}>`);
     trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`, "g"), `</${tag}>`);
@@ -219,5 +218,16 @@ export function fixTrans(trans: string) {
 
   trans = trans.replace(/< ?pre class ?= ?"(.+)" ?> ?/g, '<pre class="$1">');
 
+  if (isZh) trans = trans.replace(/微信/g, "Telegram");
+
   return trans;
+}
+
+export function fixText(text: string, isZh?: boolean) {
+  if (isZh) text = text.replace(/Telegram/gi, "WeChat");
+  return text;
+}
+
+export function isZh(targetLang?: string) {
+  return !!targetLang?.toLowerCase().startsWith("zh");
 }
