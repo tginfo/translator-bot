@@ -29,7 +29,7 @@ paths = paths.filter((p) => p != "data.json");
 paths.sort(
   (a, b) =>
     Number(a.replace(".json", "").split("-")[1]) -
-    Number(b.replace(".json", "").split("-")[1]),
+    Number(b.replace(".json", "").split("-")[1])
 );
 
 const path = paths.slice(-1)[0] || "data.json";
@@ -40,7 +40,9 @@ export const languages: Record<string, Language> = data.languages;
 
 export const sudoers: Sudoer[] = data.sudoers;
 
-export const alt = -1001253459535;
+export const enAlt = -1001253459535;
+
+export const ruAlt = -1001719500532;
 
 export const tginfo = 1001003307527;
 
@@ -53,8 +55,8 @@ export const betainfoen = -1001335406586;
 export async function update(
   func: (
     languages: Record<string, Language>,
-    sudoers: Sudoer[],
-  ) => Promise<void> | void,
+    sudoers: Sudoer[]
+  ) => Promise<void> | void
 ) {
   const result = func(languages, sudoers);
 
@@ -62,7 +64,7 @@ export async function update(
 
   await Deno.writeTextFile(
     `data-${Date.now()}.json`,
-    JSON.stringify({ languages, sudoers }),
+    JSON.stringify({ languages, sudoers })
   );
 }
 
