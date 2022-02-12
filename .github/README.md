@@ -1,6 +1,6 @@
 # translator-bot
 
 The bot that Telegram Info uses in moderation of the posts in
-[its different branches](tginfoworld).
+[its different branches].
 
-[tginfoworld]: https://t.me/tginfoworld
+[its different branches]: https://t.me/tginfoworld
