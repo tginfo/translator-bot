@@ -128,7 +128,7 @@ cq.callbackQuery("alt-translate", async (ctx) => {
   try {
     const result = await gtr.translate(text, {
       targetLang: language.targetLang ?? language.id,
-      sourceLang: language.from,
+      // sourceLang: language.from,
     });
 
     translation = result.trans;
