@@ -1,6 +1,6 @@
-import { GTR, TranslateOptions } from "https://deno.land/x/gtr/mod.ts";
+import { GTR, TranslateOptions } from "https://deno.land/x/gtr@v0.0.1/mod.ts";
 
-import { MessageEntity } from "https://cdn.skypack.dev/@grammyjs/types@v2.5.0?dts";
+import { MessageEntity } from "https://cdn.skypack.dev/@grammyjs/types@v2.7.1?dts";
 
 import { fixTrans, unparse, isZh, fixText } from "./utils.ts";
 

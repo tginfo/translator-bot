@@ -1,6 +1,6 @@
-import { setColorEnabled } from "https://deno.land/std@0.120.0/fmt/colors.ts";
-import * as log from "https://deno.land/std@0.120.0/log/mod.ts";
-import { LogRecord } from "https://deno.land/std@0.120.0/log/mod.ts";
+import { setColorEnabled } from "https://deno.land/std@0.140.0/fmt/colors.ts";
+import * as log from "https://deno.land/std@0.140.0/log/mod.ts";
+import { LogRecord } from "https://deno.land/std@0.140.0/log/mod.ts";
 
 setColorEnabled(false);
 

@@ -2,10 +2,10 @@ import {
   critical,
   info,
   warning,
-} from "https://deno.land/std@0.120.0/log/mod.ts";
+} from "https://deno.land/std@0.140.0/log/mod.ts";
 
-import { Bot } from "https://deno.land/x/grammy/mod.ts";
-import { hydrateFiles } from "https://deno.land/x/grammy_files/mod.ts";
+import { Bot } from "https://deno.land/x/grammy@v1.8.3/mod.ts";
+import { hydrateFiles } from "https://deno.land/x/grammy_files@v1.0.4/mod.ts";
 
 import { Context } from "./context.ts";
 import env from "./env.ts";

@@ -1,4 +1,4 @@
-import { Composer } from "https://deno.land/x/grammy/mod.ts";
+import { Composer } from "https://deno.land/x/grammy@v1.8.3/mod.ts";
 
 import { Context } from "../context.ts";
 import callback from "./callback.ts";

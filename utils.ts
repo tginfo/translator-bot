@@ -1,10 +1,10 @@
-import { Context, GrammyError } from "https://deno.land/x/grammy/mod.ts";
+import { Context, GrammyError } from "https://deno.land/x/grammy@v1.8.3/mod.ts";
 
 import {
   InlineKeyboardButton,
   InlineKeyboardMarkup,
   MessageEntity,
-} from "https://cdn.skypack.dev/@grammyjs/types@v2.5.0?dts";
+} from "https://cdn.skypack.dev/@grammyjs/types@v2.7.1?dts";
 
 import { Language, languages } from "./data.ts";
 

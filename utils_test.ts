@@ -1,9 +1,9 @@
 import {
   assertEquals,
   assertNotEquals,
-} from "https://deno.land/std@0.120.0/testing/asserts.ts";
+} from "https://deno.land/std@0.140.0/testing/asserts.ts";
 
-import { MessageEntity } from "https://cdn.skypack.dev/@grammyjs/types@v2.5.0?dts";
+import { MessageEntity } from "https://cdn.skypack.dev/@grammyjs/types@v2.7.1?dts";
 
 import {
   escape,
