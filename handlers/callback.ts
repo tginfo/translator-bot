@@ -60,11 +60,11 @@ cq.callbackQuery("translate", async (ctx) => {
 
     translation = result.trans;
 
-    info(`Request to Google Translate successful for ${language.id} middle.`);
+    info(`[${ctx.from.id}] Request to Google Translate successful for ${language.id} middle.`);
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
     warning(
-      `Request to Google Translate unsuccessful for ${language.id} middle: ${err}`
+      `[${ctx.from.id}] Request to Google Translate unsuccessful for ${language.id} middle: ${err}`
     );
   }
 
@@ -88,7 +88,7 @@ cq.callbackQuery("translate", async (ctx) => {
       failed = true;
 
       warning(
-        `Could not send translation with formatting in ${language.id} middle.`
+        `[${ctx.from.id}] Could not send translation with formatting in ${language.id} middle.`
       );
 
       await answer(
@@ -134,12 +134,12 @@ cq.callbackQuery("alt-translate", async (ctx) => {
     translation = result.trans;
 
     info(
-      `Alternative request to Google Translate successful for ${language.id} middle.`
+      `[${ctx.from.id}] Alternative request to Google Translate successful for ${language.id} middle.`
     );
   } catch (err) {
     translation = `An error occurred while translating.\n\n${escape(err)}`;
     warning(
-      `Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`
+      `[${ctx.from.id}] Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`
     );
   }
 
@@ -179,10 +179,10 @@ cq.callbackQuery(/^send/, async (ctx) => {
 
   try {
     message = await ctx.copyMessage(chatId);
-    info(`Sending successful in ${language.id} middle.`);
+    info(`[${ctx.from.id}] Sending successful in ${language.id} middle.`);
   } catch (err) {
     await answerError(ctx, err);
-    error(`Sending unsuccessful in ${language.id} middle: ${err}`);
+    error(`[${ctx.from.id}] Sending unsuccessful in ${language.id} middle: ${err}`);
     return;
   }
 
@@ -227,10 +227,10 @@ cq.callbackQuery(/^edit/, async (ctx) => {
       });
     }
 
-    info(`Editing successful in ${language.id} middle.`);
+    info(`[${ctx.from.id}] Editing successful in ${language.id} middle.`);
   } catch (err) {
     await answerError(ctx, err);
-    warning(`Editing unsuccessful in ${language.id} middle.`);
+    warning(`[${ctx.from.id}] Editing unsuccessful in ${language.id} middle.`);
     return;
   }
 });
