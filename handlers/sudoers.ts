@@ -1,7 +1,4 @@
-import { error, info, warning } from "https://deno.land/std@0.140.0/log/mod.ts";
-
-import { Composer, InputFile } from "https://deno.land/x/grammy@v1.8.3/mod.ts";
-
+import { Composer, InputFile, log } from "../deps.ts";
 import { Context } from "../context.ts";
 import {
   dump,
@@ -31,7 +28,7 @@ su.command("import", async (ctx) => {
 
   const url = (await ctx.api.getFile(document.file_id)).getUrl();
 
-  info("Received a request to update data.");
+  log.info("Received a request to update data.");
 
   let data;
 
@@ -39,7 +36,7 @@ su.command("import", async (ctx) => {
     data = await (await fetch(url)).json();
   } catch (err) {
     await ctx.reply(`An error occurred.\n\n${err}`);
-    warning(`Failed to fetch the URL: ${err}`);
+    log.warning(`Failed to fetch the URL: ${err}`);
     return;
   }
 
@@ -47,12 +44,12 @@ su.command("import", async (ctx) => {
 
   if (result) {
     await ctx.reply("Data updated.");
-    info("Data updated.");
+    log.info("Data updated.");
     return;
   }
 
   await ctx.reply("Data not updated.");
-  info("Data not updated.");
+  log.info("Data not updated.");
 });
 
 su.command("export", (ctx) => {
@@ -84,7 +81,7 @@ su.command("add", async (ctx) => {
     languages[id].translators.push(translator);
   });
 
-  info(`Added ${translator} to ${id}.`);
+  log.info(`Added ${translator} to ${id}.`);
   await ctx.reply(`Added to ${id}.`);
 });
 
@@ -130,7 +127,7 @@ su.command("rm", async (ctx) => {
     languages[id].translators = newTranslators;
   });
 
-  info(`Removed ${diffText} from ${id}.`);
+  log.info(`Removed ${diffText} from ${id}.`);
   await ctx.reply(`Removed ${diffText} from ${id}.`);
 });
 
@@ -181,7 +178,7 @@ su.command("broadcast", async (ctx) => {
 
   const messageId = `message ${message.message_id} of chat ${ctx.chat.id}`;
 
-  info(`Broadcasting ${messageId}...`);
+  log.info(`Broadcasting ${messageId}...`);
 
   const t1 = Date.now();
   let s = 0;
@@ -197,11 +194,11 @@ su.command("broadcast", async (ctx) => {
         message.message_id,
       );
 
-      info(`Forwarded ${messageId} to ${id} middle.`);
+      log.info(`Forwarded ${messageId} to ${id} middle.`);
 
       s++;
     } catch (err) {
-      error(`Failed to forward ${messageId} to ${id} middle: ${err}`);
+      log.error(`Failed to forward ${messageId} to ${id} middle: ${err}`);
 
       f++;
     }
@@ -209,7 +206,7 @@ su.command("broadcast", async (ctx) => {
 
   const dt = (Date.now() - t1) / 1000;
 
-  info(
+  log.info(
     `Finished broadcasting ${messageId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
   );
 

@@ -1,13 +1,11 @@
-import { error, info } from "https://deno.land/std@0.140.0/log/mod.ts";
-
-import { Composer, InlineKeyboard } from "https://deno.land/x/grammy@v1.8.3/mod.ts";
+import { Composer, InlineKeyboard, log } from "../deps.ts";
 
 import {
-  enAlt,
-  ruAlt,
   betainfo,
   betainfoen,
+  enAlt,
   languages,
+  ruAlt,
   tginfo,
   tginfoen,
 } from "../data.ts";
@@ -42,15 +40,14 @@ composer
         : "alt"
     }-${isBeta ? "beta" : ""}`;
 
-    const channel =
-      (keyChannels.en.includes(ctx.chat.id)
-        ? "English"
-        : keyChannels.ru.includes(ctx.chat.id)
-        ? "Russian"
-        : "alt") + ` ${isBeta ? "beta " : ""}channel`;
+    const channel = (keyChannels.en.includes(ctx.chat.id)
+      ? "English"
+      : keyChannels.ru.includes(ctx.chat.id)
+      ? "Russian"
+      : "alt") + ` ${isBeta ? "beta " : ""}channel`;
 
-    info(`Received a post from the ${channel}.`);
-    info(`Copying ${postId}...`);
+    log.info(`Received a post from the ${channel}.`);
+    log.info(`Copying ${postId}...`);
 
     const t1 = Date.now();
     let s = 0;
@@ -78,17 +75,17 @@ composer
             .row()
             .text(
               `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-              `send_${isBeta ? "beta" : "tg"}`
+              `send_${isBeta ? "beta" : "tg"}`,
             )
             .row()
             .text("Idle", `idle`),
         });
 
-        info(`Copied ${postId} to ${id} middle.`);
+        log.info(`Copied ${postId} to ${id} middle.`);
 
         s++;
       } catch (err) {
-        error(`Failed to copy ${postId} to ${id} middle: ${err}`);
+        log.error(`Failed to copy ${postId} to ${id} middle: ${err}`);
 
         f++;
       }
@@ -96,7 +93,7 @@ composer
 
     const dt = (Date.now() - t1) / 1000;
 
-    info(
-      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
+    log.info(
+      `Finished copying ${postId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
     );
   });
