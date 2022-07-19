@@ -40,43 +40,20 @@ export const languages: Record<string, Language> = data.languages;
 
 export const sudoers: Sudoer[] = data.sudoers;
 
-export const enAlt = -1001515939702;
-
-export const ruAlt = -1001719500532;
-
-export const tginfo = 1001003307527;
-
-export const betainfo = -1001313913616;
-
-export const tginfoen = -1001263222189;
-
-export const betainfoen = -1001335406586;
-
-export const allChannels = [
-  enAlt,
-  ruAlt,
-  tginfo,
-  betainfo,
-  tginfoen,
-  betainfoen,
-];
-
-export const channelNames: Record<string, string> = {
-  enAlt: "alten",
-  ruAlt: "altru",
-  tginfo: "@tginfo",
-  betainfo: "@betainfo",
-  tginfoen: "@tginfoen",
-  betainfoen: "@betainfoen",
-};
-
-export const altChannels = [enAlt, ruAlt];
-
-export const betaChannels = [betainfo, betainfoen];
-
-export const keyChannels = {
-  ru: [tginfo, betainfo],
-  en: [tginfoen, betainfoen],
+export const channels: Record<
+  string,
+  Record<string, { name: string; flags?: string[] }>
+> = {
+  ru: {
+    "-1001003307527": { name: "@tginfo" },
+    "-1001313913616": { name: "@betainfo", flags: ["beta"] },
+    "-1001719500532": { name: "rualt", flags: ["alt"] },
+  },
+  en: {
+    "-1001263222189": { name: "@tginfoen" },
+    "-1001335406586": { name: "@betainfoen", flags: ["beta"] },
+    "-1001515939702": { name: "enalt", flags: ["alt"] },
+  },
 };
 
 export async function update(

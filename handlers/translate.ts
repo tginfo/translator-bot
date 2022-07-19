@@ -1,13 +1,5 @@
 import { Composer, InlineKeyboard, log } from "$deps";
-import {
-  allChannels,
-  altChannels,
-  betaChannels,
-  enAlt,
-  keyChannels,
-  languages,
-  ruAlt,
-} from "../data.ts";
+import { channels, languages } from "../data.ts";
 
 const composer = new Composer();
 
@@ -15,26 +7,19 @@ export default composer;
 
 composer
   .on(["channel_post:text", "channel_post:caption"])
-  .filter((ctx) => allChannels.includes(ctx.chat.id))
+  .filter((ctx) =>
+    Object.keys(channels.ru).concat(Object.keys(channels.en)).includes(
+      String(ctx.chat.id),
+    )
+  )
   .use(async (ctx) => {
-    const isAlt = altChannels.includes(ctx.chat.id);
-    const isBeta = betaChannels.includes(ctx.chat.id);
+    const channel = Object.values(channels.ru).concat(
+      Object.values(channels.en),
+    )[ctx.chat.id];
+    const isBeta = channel.flags?.includes("beta");
+    const postId = `${ctx.channelPost.message_id}-${channel.name}`;
 
-    const postId = `${ctx.channelPost.message_id}-${
-      keyChannels.en.includes(ctx.chat.id)
-        ? "en"
-        : keyChannels.ru.includes(ctx.chat.id)
-        ? "ru"
-        : "alt"
-    }${isBeta ? "-beta" : ""}`;
-
-    const channel = (keyChannels.en.includes(ctx.chat.id)
-      ? "English"
-      : keyChannels.ru.includes(ctx.chat.id)
-      ? "Russian"
-      : "alt") + ` ${isBeta ? "beta " : ""}channel`;
-
-    log.info(`Received a post from the ${channel}.`);
+    log.info(`Received a post from the ${channel.name}.`);
     log.info(`Copying ${postId}...`);
 
     const t1 = Date.now();
@@ -44,15 +29,7 @@ composer
     for (const id in languages) {
       const language = languages[id];
 
-      if (!isAlt && !keyChannels[language.from].includes(ctx.chat.id)) {
-        continue;
-      }
-
-      if (
-        isAlt &&
-        ((language.from == "ru" && ctx.chat.id != ruAlt) ||
-          (language.from == "en" && ctx.chat.id != enAlt))
-      ) {
+      if (!Object.keys(channels[language.from]).includes(String(ctx.chat.id))) {
         continue;
       }
 
