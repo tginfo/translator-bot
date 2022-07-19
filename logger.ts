@@ -2,17 +2,12 @@ import { log, setColorEnabled } from "$deps";
 
 setColorEnabled(false);
 
-const formatter = (logRecord: log.LogRecord) => {
-  const date = new Date();
-
-  return `[${date.toDateString()} ${date.toLocaleTimeString()}] [${logRecord.levelName}] ${logRecord.msg}`;
-};
-
 export const setup = () =>
   log.setup({
     handlers: {
       console: new log.handlers.ConsoleHandler("DEBUG", {
-        formatter,
+        formatter: (r) =>
+          `[${r.datetime.toDateString()} ${r.datetime.toLocaleTimeString()}] [${r.levelName}] ${r.msg}`,
       }),
     },
     loggers: {
