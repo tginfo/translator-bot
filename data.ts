@@ -40,7 +40,7 @@ export const languages: Record<string, Language> = data.languages;
 
 export const sudoers: Sudoer[] = data.sudoers;
 
-export const enAlt = -1001253459535;
+export const enAlt = -1001515939702;
 
 export const ruAlt = -1001719500532;
 
@@ -51,6 +51,33 @@ export const betainfo = -1001313913616;
 export const tginfoen = -1001263222189;
 
 export const betainfoen = -1001335406586;
+
+export const allChannels = [
+  enAlt,
+  ruAlt,
+  tginfo,
+  betainfo,
+  tginfoen,
+  betainfoen,
+];
+
+export const channelNames: Record<string, string> = {
+  enAlt: "alten",
+  ruAlt: "altru",
+  tginfo: "@tginfo",
+  betainfo: "@betainfo",
+  tginfoen: "@tginfoen",
+  betainfoen: "@betainfoen",
+};
+
+export const altChannels = [enAlt, ruAlt];
+
+export const betaChannels = [betainfo, betainfoen];
+
+export const keyChannels = {
+  ru: [tginfo, betainfo],
+  en: [tginfoen, betainfoen],
+};
 
 export async function update(
   func: (

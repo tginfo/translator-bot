@@ -1,28 +1,17 @@
 import { Composer, InlineKeyboard, log } from "$deps";
 import {
-  betainfo,
-  betainfoen,
+  allChannels,
+  altChannels,
+  betaChannels,
   enAlt,
+  keyChannels,
   languages,
   ruAlt,
-  tginfo,
-  tginfoen,
 } from "../data.ts";
 
 const composer = new Composer();
 
 export default composer;
-
-const allChannels = [enAlt, ruAlt, tginfo, betainfo, tginfoen, betainfoen];
-
-const altChannels = [enAlt, ruAlt];
-
-const betaChannels = [betainfo, betainfoen];
-
-const keyChannels = {
-  ru: [tginfo, betainfo],
-  en: [tginfoen, betainfoen],
-};
 
 composer
   .on(["channel_post:text", "channel_post:caption"])
@@ -37,7 +26,7 @@ composer
         : keyChannels.ru.includes(ctx.chat.id)
         ? "ru"
         : "alt"
-    }-${isBeta ? "beta" : ""}`;
+    }${isBeta ? "-beta" : ""}`;
 
     const channel = (keyChannels.en.includes(ctx.chat.id)
       ? "English"

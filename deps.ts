@@ -10,6 +10,7 @@ import {
   FileFlavor,
   hydrateFiles,
 } from "https://deno.land/x/grammy_files@v1.0.4/mod.ts";
+export * as p from "https://deno.land/x/grammy_parse_mode@1.3.1/mod.ts";
 
 export * as log from "https://deno.land/std@0.148.0/log/mod.ts";
 export { setColorEnabled } from "https://deno.land/std@0.148.0/fmt/colors.ts";
@@ -21,7 +22,7 @@ export {
 } from "https://deno.land/x/grammy@v1.9.1/platform.deno.ts";
 
 export { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
-export { cleanEnv, str } from "https://deno.land/x/envalid@v0.0.3/mod.ts";
+export { cleanEnv, num, str } from "https://deno.land/x/envalid@v0.0.3/mod.ts";
 
 export {
   GTR,

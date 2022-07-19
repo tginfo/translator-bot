@@ -1,4 +1,4 @@
-import { Bot, Context, hydrateFiles, log } from "$deps";
+import { Bot, Context, hydrateFiles, log, p } from "$deps";
 import handlers from "./handlers/mod.ts";
 import env from "./env.ts";
 

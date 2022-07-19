@@ -1,4 +1,4 @@
-import { Composer, InlineKeyboard, log,Context } from "$deps";
+import { Composer, Context, InlineKeyboard, log } from "$deps";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,
