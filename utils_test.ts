@@ -2,7 +2,7 @@ import {
   assertEquals,
   assertNotEquals,
 } from "https://deno.land/std@0.148.0/testing/asserts.ts";
-import { type MessageEntity } from "./deps.ts";
+import { type MessageEntity } from "$deps";
 
 import {
   escape,

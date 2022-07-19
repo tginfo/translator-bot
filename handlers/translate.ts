@@ -1,5 +1,4 @@
-import { Composer, InlineKeyboard, log } from "../deps.ts";
-
+import { Composer, InlineKeyboard, log } from "$deps";
 import {
   betainfo,
   betainfoen,

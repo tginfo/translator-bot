@@ -1,4 +1,4 @@
-import { cleanEnv, config, str } from "./deps.ts";
+import { cleanEnv, config, str } from "$deps";
 
 config({ export: true });
 

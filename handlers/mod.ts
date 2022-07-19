@@ -1,5 +1,4 @@
-import { Composer } from "../deps.ts";
-import { Context } from "../context.ts";
+import { Composer, Context } from "$deps";
 import callback from "./callback.ts";
 import sudoers from "./sudoers.ts";
 import translate from "./translate.ts";

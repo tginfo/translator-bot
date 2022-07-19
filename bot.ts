@@ -1,7 +1,6 @@
-import { Bot, hydrateFiles, log } from "./deps.ts";
-import { Context } from "./context.ts";
-import env from "./env.ts";
+import { Bot, Context, hydrateFiles, log } from "$deps";
 import handlers from "./handlers/mod.ts";
+import env from "./env.ts";
 
 const bot = new Bot<Context>(env.BOT_TOKEN);
 

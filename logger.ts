@@ -1,4 +1,4 @@
-import { log, setColorEnabled } from "./deps.ts";
+import { log, setColorEnabled } from "$deps";
 
 setColorEnabled(false);
 

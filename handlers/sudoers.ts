@@ -1,5 +1,5 @@
-import { Composer, InputFile, log } from "../deps.ts";
-import { Context } from "../context.ts";
+import { Composer, InputFile, log,Context } from "$deps";
+import { getUserLink } from "../utils.ts";
 import {
   dump,
   languages,
@@ -7,7 +7,6 @@ import {
   update,
   updateWithFileData,
 } from "../data.ts";
-import { getUserLink } from "../utils.ts";
 
 const composer = new Composer<Context>();
 

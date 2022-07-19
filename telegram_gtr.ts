@@ -1,4 +1,4 @@
-import { GTR, MessageEntity, type TranslateOptions } from "./deps.ts";
+import { GTR, MessageEntity, type TranslateOptions } from "$deps";
 import { fixText, fixTrans, isZh, unparse } from "./utils.ts";
 
 export class TelegramGTR extends GTR {

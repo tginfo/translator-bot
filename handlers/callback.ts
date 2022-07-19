@@ -1,4 +1,4 @@
-import { Composer, InlineKeyboard, log } from "../deps.ts";
+import { Composer, InlineKeyboard, log,Context } from "$deps";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,
@@ -10,7 +10,7 @@ import {
   replaceButton,
 } from "../utils.ts";
 
-const composer = new Composer();
+const composer = new Composer<Context>();
 
 export default composer;
 

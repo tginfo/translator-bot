@@ -1,11 +1,11 @@
-import { Language, languages } from "./data.ts";
 import {
   type Context,
   GrammyError,
   type InlineKeyboardButton,
   type InlineKeyboardMarkup,
   type MessageEntity,
-} from "./deps.ts";
+} from "$deps";
+import { Language, languages } from "./data.ts";
 
 export function answer(ctx: Context, text: string) {
   return ctx.answerCallbackQuery({ text, show_alert: true });
