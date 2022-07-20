@@ -52,7 +52,7 @@ export const channels: Record<
   en: {
     "-1001263222189": { name: "@tginfoen" },
     "-1001335406586": { name: "@betainfoen", flags: ["beta"] },
-    "-1001515939702": { name: "enalt", flags: ["alt"] },
+    "-1001253459535": { name: "enalt", flags: ["alt"] },
   },
 };
 
