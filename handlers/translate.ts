@@ -13,9 +13,7 @@ composer
     )
   )
   .use(async (ctx) => {
-    const channel = Object.values(channels.ru).concat(
-      Object.values(channels.en),
-    )[ctx.chat.id];
+    const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
     const isBeta = channel.flags?.includes("beta");
     const postId = `${ctx.channelPost.message_id}-${channel.name}`;
 

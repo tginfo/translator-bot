@@ -19,9 +19,7 @@ ecp.use((ctx, next) => {
 });
 
 ecp.use(async (ctx) => {
-  const channel = Object.values(channels.ru).concat(
-    Object.values(channels.en),
-  )[ctx.chat.id];
+  const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
   const { text, entities } = p.fmt`${
     p.link(
       ctx.msg.message_id,
