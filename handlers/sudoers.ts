@@ -1,4 +1,4 @@
-import { Composer, Context, InputFile, log } from "$deps";
+import { Composer, Context, InputFile, log, MINUTE } from "$deps";
 import { getUserLink } from "../utils.ts";
 import {
   dump,
@@ -212,4 +212,26 @@ su.command("broadcast", async (ctx) => {
   await ctx.reply(
     `Broadcast complete.\nFailed forwards: ${f}\nSucceeded forwards: ${s}\nTime elapsed: ${dt}s`,
   );
+});
+
+su.command("invite", async (ctx) => {
+  const parts = ctx.message.text.split(/\s/);
+  const id = parts[1];
+  const memberLimit = Number(parts[2] ?? "1");
+  const minutes = Number(parts[3] ?? "5");
+
+  if (id) {
+    const language = languages[id];
+
+    if (language) {
+      const { invite_link } = await ctx.api.createChatInviteLink(
+        language.edit,
+        {
+          member_limit: memberLimit,
+          expire_date: (Date.now() + minutes * MINUTE) / 1000,
+        },
+      );
+      await ctx.reply(invite_link);
+    }
+  }
 });

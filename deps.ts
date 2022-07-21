@@ -13,6 +13,7 @@ import {
 export * as p from "https://deno.land/x/grammy_parse_mode@1.3.1/mod.ts";
 
 export * as log from "https://deno.land/std@0.149.0/log/mod.ts";
+export { MINUTE } from "https://deno.land/std@0.149.0/datetime/mod.ts";
 export { setColorEnabled } from "https://deno.land/std@0.149.0/fmt/colors.ts";
 
 export {
