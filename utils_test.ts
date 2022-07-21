@@ -1,7 +1,7 @@
 import {
   assertEquals,
   assertNotEquals,
-} from "https://deno.land/std@0.148.0/testing/asserts.ts";
+} from "https://deno.land/std@0.149.0/testing/asserts.ts";
 import { type MessageEntity } from "$deps";
 import {
   escape,
