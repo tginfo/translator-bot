@@ -21,7 +21,7 @@ export {
   type MessageEntity,
 } from "https://deno.land/x/grammy@v1.9.1/platform.deno.ts";
 
-export { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
+export { config } from "https://deno.land/std@0.149.0/dotenv/mod.ts";
 export { cleanEnv, num, str } from "https://deno.land/x/envalid@v0.0.3/mod.ts";
 
 export {

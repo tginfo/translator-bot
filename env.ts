@@ -1,6 +1,6 @@
 import { cleanEnv, config, num, str } from "$deps";
 
-config({ export: true });
+await config({ export: true });
 
 export default cleanEnv(Deno.env.toObject(), {
   BOT_TOKEN: str(),
