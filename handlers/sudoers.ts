@@ -81,6 +81,18 @@ su.command("add", async (ctx) => {
   });
 
   log.info(`Added ${translator} to ${id}.`);
+
+  try {
+    await ctx.api.promoteChatMember(id, translator, {
+      can_edit_messages: true,
+      can_delete_messages: true,
+      can_post_messages: true,
+    });
+    log.info(`Promoted ${translator} in ${id}.`);
+  } catch (err) {
+    log.warning(`Could not promote ${translator} in ${id}: ${err}`);
+  }
+
   await ctx.reply(`Added to ${id}.`);
 });
 
