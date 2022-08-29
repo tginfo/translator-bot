@@ -83,7 +83,7 @@ su.command("add", async (ctx) => {
   log.info(`Added ${translator} to ${id}.`);
 
   try {
-    await ctx.api.promoteChatMember(id, translator, {
+    await ctx.api.promoteChatMember(languages[id].edit, translator, {
       can_edit_messages: true,
       can_delete_messages: true,
       can_post_messages: true,
