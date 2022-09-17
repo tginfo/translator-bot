@@ -1,4 +1,5 @@
-import { Composer, Context } from "$deps";
+import { Composer } from "grammy";
+import { Context } from "../utils.ts";
 import callback from "./callback.ts";
 import edit from "./edit.ts";
 import sudoers from "./sudoers.ts";

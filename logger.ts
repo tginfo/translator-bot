@@ -1,4 +1,5 @@
-import { log, setColorEnabled } from "$deps";
+import * as log from "std/log/mod.ts";
+import { setColorEnabled } from "std/fmt/colors.ts";
 
 setColorEnabled(false);
 

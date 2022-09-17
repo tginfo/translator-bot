@@ -1,5 +1,7 @@
-import { Composer, Context, InputFile, log, MINUTE } from "$deps";
-import { getUserLink } from "../utils.ts";
+import * as log from "std/log/mod.ts";
+import { MINUTE } from "std/datetime/mod.ts";
+import { Composer, InputFile } from "grammy";
+import { Context, getUserLink } from "../utils.ts";
 import {
   dump,
   languages,

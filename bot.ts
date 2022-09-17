@@ -1,4 +1,7 @@
-import { Bot, Context, hydrateFiles, log } from "$deps";
+import * as log from "std/log/mod.ts";
+import { Bot } from "grammy";
+import { hydrateFiles } from "grammy_files";
+import { Context } from "./utils.ts";
 import handlers from "./handlers/mod.ts";
 import env from "./env.ts";
 

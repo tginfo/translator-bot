@@ -1,4 +1,5 @@
-import { cleanEnv, config, num, str } from "$deps";
+import { config } from "std/dotenv/mod.ts";
+import { cleanEnv, num, str } from "envalid";
 
 await config({ export: true });
 

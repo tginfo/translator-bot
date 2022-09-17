@@ -1,4 +1,5 @@
-import { GTR, MessageEntity, type TranslateOptions } from "$deps";
+import { MessageEntity } from "grammy/types.ts";
+import { GTR, TranslateOptions } from "gtr";
 import { fixText, fixTrans, isZh, unparse } from "./utils.ts";
 
 export class TelegramGTR extends GTR {

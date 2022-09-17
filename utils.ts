@@ -1,11 +1,13 @@
+import { Context as Context_, GrammyError } from "grammy";
 import {
-  type Context,
-  GrammyError,
-  type InlineKeyboardButton,
-  type InlineKeyboardMarkup,
-  type MessageEntity,
-} from "$deps";
+  InlineKeyboardButton,
+  InlineKeyboardMarkup,
+  MessageEntity,
+} from "grammy/types.ts";
+import { FileFlavor } from "grammy_files";
 import { Language, languages } from "./data.ts";
+
+export type Context = FileFlavor<Context_>;
 
 export function answer(ctx: Context, text: string) {
   return ctx.answerCallbackQuery({ text, show_alert: true });

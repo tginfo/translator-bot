@@ -1,8 +1,10 @@
-import { Composer, Context, InlineKeyboard, log } from "$deps";
+import * as log from "std/log/mod.ts";
+import { Composer, InlineKeyboard } from "grammy";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,
   answerError,
+  Context,
   escape,
   findLanguage,
   hasButton,

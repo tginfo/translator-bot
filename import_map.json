@@ -1,5 +1,12 @@
 {
   "imports": {
-    "$deps": "./deps.ts"
+    "$deps": "./deps.ts",
+    "grammy": "https://deno.land/x/grammy@v1.11.0/mod.ts",
+    "grammy/": "https://deno.land/x/grammy@v1.11.0/",
+    "grammy_parse_mode": "https://deno.land/x/grammy_parse_mode@1.4.0/mod.ts",
+    "grammy_files": "https://deno.land/x/grammy_files@v1.0.4/mod.ts",
+    "std/": "https://deno.land/std@0.156.0/",
+    "envalid": "https://deno.land/x/envalid@0.1.2/mod.ts",
+    "gtr": "https://deno.land/x/gtr@v0.0.1/mod.ts"
   }
 }

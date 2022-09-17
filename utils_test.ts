@@ -1,8 +1,5 @@
-import {
-  assertEquals,
-  assertNotEquals,
-} from "https://deno.land/std@0.149.0/testing/asserts.ts";
-import { type MessageEntity } from "$deps";
+import { assertEquals, assertNotEquals } from "std/testing/asserts.ts";
+import { MessageEntity } from "grammy/types.ts";
 import {
   escape,
   fixText,
