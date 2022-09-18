@@ -1,6 +1,7 @@
 import * as log from "std/log/mod.ts";
 import { MINUTE } from "std/datetime/mod.ts";
 import { Composer, InputFile } from "grammy";
+import * as p from "grammy_parse_mode";
 import { Context, getUserLink } from "../utils.ts";
 import {
   dump,
@@ -230,13 +231,15 @@ su.command("broadcast", async (ctx) => {
   );
 });
 
-su.command("invite", async (ctx) => {
-  const parts = ctx.message.text.split(/\s/);
-  const id = parts[1];
-  const memberLimit = Number(parts[2] ?? "1");
-  const minutes = Number(parts[3] ?? "5");
+su.inlineQuery(
+  /^invite ([a-z]{2,3}) ([1-9]+) ([0-9]+) (welcome|links)$/,
+  async (ctx) => {
+    const args = ctx.match!;
+    const id = args[1];
+    const memberLimit = Number(args[2]);
+    const minutes = Number(args[3]);
+    const responseType = args[4] as "welcome" | "links";
 
-  if (id) {
     const language = languages[id];
 
     if (language) {
@@ -260,10 +263,33 @@ su.command("invite", async (ctx) => {
         inviteLinks.push(invite_link);
       }
 
-      await ctx.reply(
-        inviteLinks.join("\n"),
-        { disable_web_page_preview: true },
-      );
+      const { text, entities } = responseType == "links"
+        ? p.fmt`${inviteLinks.join("\n")}`
+        : p
+          .fmt`Great! You can get started right away by joining the following chats:
+
+${p.bold("Middle channel")}
+${inviteLinks[0]}
+Here the bot sends the posts to be translated, you edit the messages there and press a button to get them posted.
+
+${
+          inviteLinks.length == 3
+            ? p.fmt`${p.bold("Local translators discussion group")}
+${inviteLinks[1]}
+This is your language-specific chat where you interact with other translators of your language. As soon as you will join the chat, we will grant you permissions to translate the posts.`
+            : ""
+        }
+
+${p.bold("All translators chat")}
+${inviteLinks[inviteLinks.length - 1]}
+In this chat you can ask for help, get answers to your questions from the tginfo crew and other volunteers. We may also make announcements there and post additional materials.`;
+
+      await ctx.answerInlineQuery([{
+        id: crypto.randomUUID(),
+        type: "article",
+        title: "Links",
+        input_message_content: { message_text: text, entities },
+      }], { cache_time: 15 });
     }
-  }
-});
+  },
+);
