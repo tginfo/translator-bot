@@ -4,6 +4,7 @@ export interface Language {
   from: "en" | "ru";
   targetLang?: string;
   edit: number;
+  group?: number;
   translators: number[];
   main: number;
   beta: number;
@@ -39,6 +40,8 @@ const data = JSON.parse(await Deno.readTextFile(path));
 export const languages: Record<string, Language> = data.languages;
 
 export const sudoers: Sudoer[] = data.sudoers;
+
+export const support = -1001266712138;
 
 export const channels: Record<
   string,

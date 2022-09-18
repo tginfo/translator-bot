@@ -6,6 +6,7 @@ import {
   dump,
   languages,
   sudoers,
+  support,
   update,
   updateWithFileData,
 } from "../data.ts";
@@ -238,14 +239,25 @@ su.command("invite", async (ctx) => {
     const language = languages[id];
 
     if (language) {
-      const { invite_link } = await ctx.api.createChatInviteLink(
+      const inviteLinks = new Array<string>();
+      const chatIds = [
+        support,
         language.edit,
-        {
-          member_limit: memberLimit,
-          expire_date: (Date.now() + minutes * MINUTE) / 1000,
-        },
-      );
-      await ctx.reply(invite_link);
+        ...(language.group ? [language.group] : []),
+      ];
+
+      for (const chatId of chatIds) {
+        const { invite_link } = await ctx.api.createChatInviteLink(
+          chatId,
+          {
+            member_limit: memberLimit,
+            expire_date: (Date.now() + minutes * MINUTE) / 1000,
+          },
+        );
+        inviteLinks.push(invite_link);
+      }
+
+      await ctx.reply(inviteLinks.join("\n"));
     }
   }
 });
