@@ -252,7 +252,9 @@ su.command("invite", async (ctx) => {
           chatId,
           {
             member_limit: memberLimit,
-            expire_date: (Date.now() + minutes * MINUTE) / 1000,
+            expire_date: minutes == 0
+              ? undefined
+              : ((Date.now() + minutes * MINUTE) / 1000),
           },
         );
         inviteLinks.push(invite_link);
