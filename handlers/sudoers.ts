@@ -156,6 +156,7 @@ su.command("stats", async (ctx) => {
         `From: ${language.from}\n` +
           `Target language: ${language.targetLang ?? id}\n` +
           `Edit: ${language.edit}\n` +
+          (language.group ? `Group: ${language.group}\n` : "") +
           `Main: ${language.main}\n` +
           `Beta: ${language.beta}\n` +
           `Translators: ${
