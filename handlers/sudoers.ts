@@ -242,9 +242,9 @@ su.command("invite", async (ctx) => {
     if (language) {
       const inviteLinks = new Array<string>();
       const chatIds = [
-        support,
         language.edit,
         ...(language.group ? [language.group] : []),
+        support,
       ];
 
       for (const chatId of chatIds) {
@@ -260,7 +260,10 @@ su.command("invite", async (ctx) => {
         inviteLinks.push(invite_link);
       }
 
-      await ctx.reply(inviteLinks.join("\n"));
+      await ctx.reply(
+        inviteLinks.join("\n"),
+        { disable_web_page_preview: true },
+      );
     }
   }
 });
