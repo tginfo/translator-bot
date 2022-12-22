@@ -1,6 +1,6 @@
 import * as log from "std/log/mod.ts";
-import { Composer } from "grammy";
-import * as p from "grammy_parse_mode";
+import { Composer } from "grammy/mod.ts";
+import * as p from "grammy_parse_mode/mod.ts";
 import { Context } from "../utils.ts";
 import { channels } from "../data.ts";
 import env from "../env.ts";

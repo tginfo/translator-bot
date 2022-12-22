@@ -1,6 +1,6 @@
 import * as log from "std/log/mod.ts";
-import { Bot } from "grammy";
-import { hydrateFiles } from "grammy_files";
+import { Bot } from "grammy/mod.ts";
+import { hydrateFiles } from "grammy_files/mod.ts";
 import { Context } from "./utils.ts";
 import handlers from "./handlers/mod.ts";
 import env from "./env.ts";

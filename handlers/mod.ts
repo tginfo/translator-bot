@@ -1,4 +1,4 @@
-import { Composer } from "grammy";
+import { Composer } from "grammy/mod.ts";
 import { Context } from "../utils.ts";
 import callback from "./callback.ts";
 import edit from "./edit.ts";

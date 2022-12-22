@@ -1,5 +1,5 @@
 import { config } from "std/dotenv/mod.ts";
-import { cleanEnv, num, str } from "envalid";
+import { cleanEnv, num, str } from "envalid/mod.ts";
 
 await config({ export: true });
 

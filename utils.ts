@@ -1,10 +1,10 @@
-import { Context as Context_, GrammyError } from "grammy";
+import { Context as Context_, GrammyError } from "grammy/mod.ts";
 import {
   InlineKeyboardButton,
   InlineKeyboardMarkup,
   MessageEntity,
 } from "grammy/types.ts";
-import { FileFlavor } from "grammy_files";
+import { FileFlavor } from "grammy_files/mod.ts";
 import { Language, languages } from "./data.ts";
 
 export type Context = FileFlavor<Context_>;

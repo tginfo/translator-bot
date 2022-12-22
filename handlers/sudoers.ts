@@ -1,7 +1,7 @@
 import * as log from "std/log/mod.ts";
 import { MINUTE } from "std/datetime/mod.ts";
-import { Composer, InputFile } from "grammy";
-import * as p from "grammy_parse_mode";
+import { Composer, InputFile } from "grammy/mod.ts";
+import * as p from "grammy_parse_mode/mod.ts";
 import { Context, getUserLink } from "../utils.ts";
 import {
   dump,

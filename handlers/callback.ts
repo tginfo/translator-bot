@@ -1,5 +1,5 @@
 import * as log from "std/log/mod.ts";
-import { Composer, InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,

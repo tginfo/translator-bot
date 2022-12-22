@@ -1,5 +1,5 @@
 import * as log from "std/log/mod.ts";
-import { Composer, InlineKeyboard } from "grammy";
+import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import { channels, languages } from "../data.ts";
 
 const composer = new Composer();
