@@ -1,5 +1,4 @@
 {
-  "lock": false,
   "imports": {
     "grammy/": "https://deno.land/x/grammy@v1.15.3/",
     "grammy_parse_mode/": "https://deno.land/x/grammy_parse_mode@1.5.0/",
