@@ -1,9 +1,10 @@
 {
+  "lock": false,
   "imports": {
-    "grammy/": "https://deno.land/x/grammy@v1.12.1/",
+    "grammy/": "https://deno.land/x/grammy@v1.15.3/",
     "grammy_parse_mode/": "https://deno.land/x/grammy_parse_mode@1.5.0/",
     "grammy_files/": "https://deno.land/x/grammy_files@v1.0.4/",
-    "std/": "https://deno.land/std@0.170.0/",
+    "std/": "https://deno.land/std@0.182.0/",
     "envalid/": "https://deno.land/x/envalid@0.1.2/",
     "gtr/": "https://deno.land/x/gtr@v0.0.1/"
   }
