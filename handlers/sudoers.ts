@@ -231,11 +231,15 @@ su.command("broadcast", async (ctx) => {
   );
 });
 
+const commonMistakes: Record<string, string> = {
+  "per": "fa (Persian)",
+  "cn": "zh (Chinese)",
+};
 su.inlineQuery(
   /^invite ([a-z]{2,3}) ([1-9]+) ([0-9]+) (welcome|links)$/,
   async (ctx) => {
     const args = ctx.match!;
-    const id = args[1];
+    const id = args[1].toLowerCase();
     const memberLimit = Number(args[2]);
     const minutes = Number(args[3]);
     const responseType = args[4] as "welcome" | "links";
@@ -289,6 +293,17 @@ In this chat you can ask for help, get answers to your questions from the tginfo
         type: "article",
         title: "Links",
         input_message_content: { message_text: text, entities },
+      }], { cache_time: 15 });
+    } else {
+      await ctx.answerInlineQuery([{
+        id: crypto.randomUUID(),
+        type: "article",
+        title: "Wrong language code",
+        input_message_content: {
+          message_text: `${id} is not a valid language code.${
+            id in commonMistakes ? ` Did you mean ${commonMistakes[id]}?` : ""
+          }`,
+        },
       }], { cache_time: 15 });
     }
   },
