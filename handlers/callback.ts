@@ -69,7 +69,12 @@ cq.callbackQuery("translate", async (ctx) => {
     );
   }
 
-  removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
+  replaceButton(
+    ctx.callbackQuery.message.reply_markup,
+    ctx.callbackQuery.data,
+    "Remove Repeated Spaces",
+    "remove_repeated_spaces",
+  );
 
   try {
     let failed = false;
