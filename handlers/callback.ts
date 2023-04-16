@@ -301,8 +301,8 @@ cq.callbackQuery(/^idle/, async (ctx) => {
   replaceButton(
     ctx.callbackQuery.message.reply_markup,
     ctx.callbackQuery.data,
-    `Idle`,
-    `idle`,
+    "Idle",
+    "idle",
   );
 
   await ctx.editMessageReplyMarkup({
