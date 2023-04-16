@@ -10,6 +10,7 @@ import {
   hasButton,
   removeButton,
   replaceButton,
+  unparse,
 } from "../utils.ts";
 
 const composer = new Composer<Context>();
@@ -236,6 +237,39 @@ cq.callbackQuery(/^edit/, async (ctx) => {
       `[${ctx.from.id}] Editing unsuccessful in ${language.id} middle.`,
     );
     return;
+  }
+});
+
+cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
+  if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
+    await answer(ctx, "Can't edit idled post.");
+    return;
+  }
+
+  const text = unparse(
+    ctx.callbackQuery.message.text! ?? ctx.callbackQuery.message.caption,
+    ctx.callbackQuery.message.entities ??
+      ctx.callbackQuery.message.caption_entities ?? [],
+  );
+  const newText = text.replace(/ {2,}/g, " ");
+
+  removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
+
+  if (newText != text) {
+    const other = {
+      parse_mode: "HTML" as const,
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    };
+
+    if (ctx.callbackQuery.message.text != undefined) {
+      await ctx.editMessageText(newText, other);
+    } else {
+      await ctx.editMessageCaption({ caption: newText, ...other });
+    }
+  } else {
+    await ctx.editMessageReplyMarkup({
+      reply_markup: ctx.callbackQuery.message.reply_markup,
+    });
   }
 });
 

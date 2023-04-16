@@ -36,13 +36,14 @@ composer
         await ctx.copyMessage(language.edit, {
           reply_markup: new InlineKeyboard()
             .text("Translate", "translate")
+            .text("Remove Repeated Spaces", "remove_repeated_spaces")
             .row()
             .text(
               `Send to ${isBeta ? "Beta" : "Main"} Channel`,
               `send_${isBeta ? "beta" : "tg"}`,
             )
             .row()
-            .text("Idle", `idle`),
+            .text("Idle", "idle"),
         });
 
         log.info(`Copied ${postId} to ${id} middle.`);
