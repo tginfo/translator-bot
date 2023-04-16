@@ -59,8 +59,8 @@ export function removeButton(
   for (const x in replyMarkup.inline_keyboard) {
     for (const y in replyMarkup.inline_keyboard[x]) {
       if (
-        (<InlineKeyboardButton.CallbackButton> replyMarkup
-          .inline_keyboard[x][y])
+        (replyMarkup
+          .inline_keyboard[x][y] as InlineKeyboardButton.CallbackButton)
           .callback_data == callbackData
       ) {
         delete replyMarkup.inline_keyboard[x][y];
@@ -87,7 +87,7 @@ export function replaceButton(
     const x = replyMarkup.inline_keyboard[i];
 
     for (const i in x) {
-      const y = <InlineKeyboardButton.CallbackButton> x[i];
+      const y = x[i] as InlineKeyboardButton.CallbackButton;
 
       if (y.callback_data == currentCallbackData) {
         y.text = typeof newText === "string" ? newText : newText(y.text);
@@ -105,7 +105,7 @@ export function hasButton(
     const x = inline_keyboard[i];
 
     for (const i in x) {
-      const y = <InlineKeyboardButton.CallbackButton> x[i];
+      const y = x[i] as InlineKeyboardButton.CallbackButton;
 
       if (y.callback_data.includes(callbackData)) {
         return true;
