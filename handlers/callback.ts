@@ -258,7 +258,7 @@ cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
   );
   let newText = text;
   while (/ {2,}/.test(newText)) {
-    newText = newText.replace(/ {2,}/g, newText);
+    newText = newText.replace(/ {2,}/g, " ");
   }
 
   removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
