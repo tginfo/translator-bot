@@ -4,6 +4,7 @@ import callback from "./callback.ts";
 import edit from "./edit.ts";
 import sudoers from "./sudoers.ts";
 import translate from "./translate.ts";
+import join from './join.ts';
 
 const composer = new Composer<Context>();
 
@@ -13,3 +14,4 @@ composer.use(callback);
 composer.use(edit);
 composer.use(sudoers);
 composer.use(translate);
+composer.use(join);

@@ -18,4 +18,13 @@ export const start = () =>
     onStart: () => {
       log.info("The bot is running.");
     },
+    allowed_updates: [
+      "callback_query",
+      "channel_post",
+      "chat_member",
+      "edited_channel_post",
+      "edited_message",
+      "inline_query",
+      "message",
+    ],
   });
