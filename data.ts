@@ -30,7 +30,7 @@ paths = paths.filter((p) => p != "data.json");
 paths.sort(
   (a, b) =>
     Number(a.replace(".json", "").split("-")[1]) -
-    Number(b.replace(".json", "").split("-")[1]),
+    Number(b.replace(".json", "").split("-")[1])
 );
 
 const path = paths.slice(-1)[0] || "data.json";
@@ -62,8 +62,8 @@ export const channels: Record<
 export async function update(
   func: (
     languages: Record<string, Language>,
-    sudoers: Sudoer[],
-  ) => Promise<void> | void,
+    sudoers: Sudoer[]
+  ) => Promise<void> | void
 ) {
   const result = func(languages, sudoers);
 
@@ -71,7 +71,7 @@ export async function update(
 
   await Deno.writeTextFile(
     `data-${Date.now()}.json`,
-    JSON.stringify({ languages, sudoers }),
+    JSON.stringify({ languages, sudoers })
   );
 }
 
@@ -99,3 +99,5 @@ export async function updateWithFileData(data: any) {
 export function dump() {
   return new TextEncoder().encode(JSON.stringify({ languages, sudoers }));
 }
+
+export const INLINE_INVITE_LINK_NAME = "tgnftrnsltrbtnln";
