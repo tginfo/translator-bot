@@ -10,7 +10,11 @@ composer.command("fix_punctuation", async (ctx) => {
   const repliedMessage = ctx.msg.reply_to_message;
   if (repliedMessage) {
     if (repliedMessage.caption || repliedMessage.text) {
-      const message = await ctx.copyMessage(ctx.chat.id);
+      const message = await ctx.api.copyMessage(
+        ctx.chat.id,
+        ctx.chat.id,
+        repliedMessage.message_id,
+      );
       if (repliedMessage.text) {
         await ctx.api.editMessageText(
           ctx.chat.id,
