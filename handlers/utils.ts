@@ -14,6 +14,7 @@ composer.command("fix_punctuation", async (ctx) => {
         ctx.chat.id,
         ctx.chat.id,
         repliedMessage.message_id,
+        { reply_to_message_id: repliedMessage.message_id },
       );
       if (repliedMessage.text) {
         await ctx.api.editMessageText(
