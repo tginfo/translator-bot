@@ -19,6 +19,15 @@ composer
     const postId = `${ctx.channelPost.message_id}-${channel.name}`;
 
     log.info(`Received a post from the ${channel.name}.`);
+
+    if (
+      ctx.entities("hashtag").findIndex((v) => v.text.toLowerCase() == "#df") !=
+        -1
+    ) {
+      log.info(`Ignored ${postId}.`);
+      return;
+    }
+
     log.info(`Copying ${postId}...`);
 
     const t1 = Date.now();
