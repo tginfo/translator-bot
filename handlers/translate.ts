@@ -35,8 +35,8 @@ composer
         await ctx.api.sendMessage(
           chatId,
           ru
-            ? `В ${channel.name} появилось сообщение с длинной надписью.`
-            : `A post with a long caption was made in ${channel.name}.`,
+            ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.`
+            : `🖼️⚠️ A post with a long caption was made in ${channel.name}.`,
         );
         log.info(`Pilots were notified of ${postId}.`);
       } catch (err) {
