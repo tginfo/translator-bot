@@ -4,8 +4,8 @@ import { Composer, InputFile } from "grammy/mod.ts";
 import * as p from "grammy_parse_mode/mod.ts";
 import { Context, getUserLink } from "../utils.ts";
 import {
-  INLINE_INVITE_LINK_NAME,
   dump,
+  INLINE_INVITE_LINK_NAME,
   languages,
   sudoers,
   support,
@@ -19,7 +19,7 @@ export default composer;
 
 const su = composer.filter(
   (ctx): ctx is typeof ctx & { from: NonNullable<(typeof ctx)["from"]> } =>
-    !!ctx.from && sudoers.includes(ctx.from.id)
+    !!ctx.from && sudoers.includes(ctx.from.id),
 );
 
 su.command("import", async (ctx) => {
@@ -103,7 +103,7 @@ su.command("add", async (ctx) => {
 
 su.command("rm", async (ctx) => {
   const id = ctx.message.reply_to_message?.text?.match(
-    /target language: (..)/i
+    /target language: (..)/i,
   )![1];
 
   const translatorsToRemove = ctx.message.text
@@ -113,7 +113,7 @@ su.command("rm", async (ctx) => {
 
   if (!id || translatorsToRemove.length == 0) {
     await ctx.reply(
-      "Reply to the stats message and pass the IDs of the translators."
+      "Reply to the stats message and pass the IDs of the translators.",
     );
     return;
   }
@@ -126,13 +126,13 @@ su.command("rm", async (ctx) => {
   }
 
   const newTranslators = language.translators.filter(
-    (t) => !translatorsToRemove.includes(t)
+    (t) => !translatorsToRemove.includes(t),
   );
 
   const diff = language.translators.length - newTranslators.length;
 
-  const diffText =
-    (diff == 1 ? "a" : diff) + " " + "translator" + (diff == 1 ? "" : "s");
+  const diffText = (diff == 1 ? "a" : diff) + " " + "translator" +
+    (diff == 1 ? "" : "s");
 
   if (diff == 0) {
     await ctx.reply("No changes were made.");
@@ -166,7 +166,7 @@ su.command("stats", async (ctx) => {
               ? "None"
               : language.translators.map(getUserLink).join(", ")
           }`,
-        { parse_mode: "HTML" }
+        { parse_mode: "HTML" },
       );
     } else {
       await ctx.reply(`Language ${id} not found.`);
@@ -176,12 +176,12 @@ su.command("stats", async (ctx) => {
   }
 
   await ctx.reply(
-    `Sudoers: ${sudoers.map(getUserLink).join(", ")} (${
-      sudoers.length
-    })\n\nLanguages: ${Object.keys(languages).join(", ")} (${
+    `Sudoers: ${
+      sudoers.map(getUserLink).join(", ")
+    } (${sudoers.length})\n\nLanguages: ${Object.keys(languages).join(", ")} (${
       Object.keys(languages).length
     })`,
-    { parse_mode: "HTML" }
+    { parse_mode: "HTML" },
   );
 });
 
@@ -208,7 +208,7 @@ su.command("broadcast", async (ctx) => {
       await ctx.api.forwardMessage(
         language.edit,
         ctx.chat.id,
-        message.message_id
+        message.message_id,
       );
 
       log.info(`Forwarded ${messageId} to ${id} middle.`);
@@ -224,11 +224,11 @@ su.command("broadcast", async (ctx) => {
   const dt = (Date.now() - t1) / 1000;
 
   log.info(
-    `Finished broadcasting ${messageId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`
+    `Finished broadcasting ${messageId} to the middle channels in ${dt}s: ${s} succeeded and ${f} failed.`,
   );
 
   await ctx.reply(
-    `Broadcast complete.\nFailed forwards: ${f}\nSucceeded forwards: ${s}\nTime elapsed: ${dt}s`
+    `Broadcast complete.\nFailed forwards: ${f}\nSucceeded forwards: ${s}\nTime elapsed: ${dt}s`,
   );
 });
 
@@ -259,28 +259,29 @@ su.inlineQuery(
         const { invite_link } = await ctx.api.createChatInviteLink(chatId, {
           name: INLINE_INVITE_LINK_NAME,
           member_limit: memberLimit,
-          expire_date:
-            minutes == 0 ? undefined : (Date.now() + minutes * MINUTE) / 1000,
+          expire_date: minutes == 0
+            ? undefined
+            : (Date.now() + minutes * MINUTE) / 1000,
         });
         inviteLinks.push(invite_link);
       }
 
-      const { text, entities } =
-        responseType == "links"
-          ? p.fmt`${inviteLinks.join("\n")}`
-          : p.fmt`Great! You can get started right away by joining the following chats:
+      const { text, entities } = responseType == "links"
+        ? p.fmt`${inviteLinks.join("\n")}`
+        : p
+          .fmt`Great! You can get started right away by joining the following chats:
 
 ${p.bold("Middle channel")}
 ${inviteLinks[0]}
 Here the bot sends the posts to be translated, you edit the messages there and press a button to get them posted.
 
 ${
-  inviteLinks.length == 3
-    ? p.fmt`${p.bold("Local translators discussion group")}
+          inviteLinks.length == 3
+            ? p.fmt`${p.bold("Local translators discussion group")}
 ${inviteLinks[1]}
 This is your language-specific chat where you interact with other translators of your language. As soon as you will join the chat, we will grant you permissions to translate the posts.`
-    : ""
-}
+            : ""
+        }
 
 ${p.bold("All translators chat")}
 ${inviteLinks[inviteLinks.length - 1]}
@@ -295,7 +296,7 @@ In this chat you can ask for help, get answers to your questions from the tginfo
             input_message_content: { message_text: text, entities },
           },
         ],
-        { cache_time: 15 }
+        { cache_time: 15 },
       );
     } else {
       await ctx.answerInlineQuery(
@@ -313,8 +314,8 @@ In this chat you can ask for help, get answers to your questions from the tginfo
             },
           },
         ],
-        { cache_time: 15 }
+        { cache_time: 15 },
       );
     }
-  }
+  },
 );

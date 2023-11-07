@@ -1,6 +1,6 @@
 import * as log from "std/log/mod.ts";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
-import { channels, languages } from "../data.ts";
+import { channels, languages, pilotChats } from "../data.ts";
 
 const composer = new Composer();
 
@@ -15,16 +15,33 @@ composer
   )
   .use(async (ctx) => {
     const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
-    const isBeta = channel.flags?.includes("beta");
+    const isBeta = channel.flags?.includes("beta") ||
+      (channel.flags?.includes("alt") &&
+        ctx.entities("hashtag").some((v) => v.text.toLowerCase() == "#beta"));
     const postId = `${ctx.channelPost.message_id}-${channel.name}`;
 
     log.info(`Received a post from the ${channel.name}.`);
 
-    if (
-      ctx.entities("hashtag").findIndex((v) => v.text.toLowerCase() == "#df") !=
-        -1
-    ) {
+    if (ctx.entities("hashtag").some((v) => v.text.toLowerCase() == "#df")) {
       log.info(`Ignored ${postId}.`);
+      return;
+    }
+
+    if (ctx.channelPost.caption && ctx.channelPost.caption.length > 2048) {
+      log.info(`Ignored ${postId}: caption too long.`);
+      try {
+        const ru = ctx.chat.id in channels.ru;
+        const chatId = pilotChats[ru ? "ru" : "en"];
+        await ctx.api.sendMessage(
+          chatId,
+          ru
+            ? `В ${channel.name} появилось сообщение с длинной надписью.`
+            : `A post with a long caption was made in ${channel.name}.`,
+        );
+        log.info(`Pilots were notified of ${postId}.`);
+      } catch (err) {
+        log.info(`Failed to notify pilots of ${postId}: ${err}`);
+      }
       return;
     }
 
