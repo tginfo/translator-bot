@@ -17,7 +17,8 @@ composer
     const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
     const isBeta = channel.flags?.includes("beta") ||
       (channel.flags?.includes("alt") &&
-        ctx.entities("hashtag").some((v) => v.text.toLowerCase() == "#beta"));
+        ctx.entities("hashtag")
+          .some((v) => v.text == "#betainfo"));
     const postId = `${ctx.channelPost.message_id}-${channel.name}`;
 
     log.info(`Received a post from the ${channel.name}.`);
