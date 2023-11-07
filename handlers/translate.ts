@@ -27,7 +27,7 @@ composer
       return;
     }
 
-    if (ctx.channelPost.caption && ctx.channelPost.caption.length > 2048) {
+    if (ctx.channelPost.caption && ctx.channelPost.caption.length > 1048) {
       log.info(`Ignored ${postId}: caption too long.`);
       try {
         const ru = ctx.chat.id in channels.ru;
