@@ -15,18 +15,18 @@ composer.on("chat_member", async (ctx) => {
     const lang = Object.entries(languages).find((v) => v[1].edit == ctx.chat.id)
       ?.[0];
     if (lang) {
-      if (languages[lang].translators.includes(ctx.chatMember.from.id)) {
-        log.info(
-          `Automatic promotion: ${ctx.chatMember.from.id} is already a translator in ${lang}.`,
-        );
-        return;
-      }
       await ctx.promoteAuthor({
         can_delete_messages: true,
         can_edit_messages: true,
         can_pin_messages: true,
         can_post_messages: true,
       });
+      if (languages[lang].translators.includes(ctx.chatMember.from.id)) {
+        log.info(
+          `Automatic promotion: ${ctx.chatMember.from.id} is already a translator in ${lang}.`,
+        );
+        return;
+      }
       await update((languages) => {
         languages[lang].translators.push(ctx.chatMember.from.id);
       });
