@@ -15,6 +15,7 @@ bot.use(handlers);
 
 export const start = () =>
   bot.start({
+    drop_pending_updates: true,
     onStart: () => {
       log.info("The bot is running.");
     },
