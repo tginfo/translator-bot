@@ -1,6 +1,6 @@
 {
   "imports": {
-    "grammy/": "https://deno.land/x/grammy@v1.19.2/",
+    "grammy/": "https://deno.land/x/grammy@v1.20.3/",
     "grammy_parse_mode/": "https://deno.land/x/grammy_parse_mode@1.8.1/",
     "grammy_files/": "https://deno.land/x/grammy_files@v1.0.4/",
     "std/": "https://deno.land/std@0.205.0/",

@@ -6,7 +6,7 @@ const composer = new Composer<Context>();
 
 export default composer;
 
-composer.command("fix_punctuation", async (ctx) => {
+composer.command(["fp", "fix_punctuation"], async (ctx) => {
   const repliedMessage = ctx.msg.reply_to_message;
   if (repliedMessage) {
     if (repliedMessage.caption || repliedMessage.text) {
@@ -16,16 +16,23 @@ composer.command("fix_punctuation", async (ctx) => {
         repliedMessage.message_id,
         { reply_to_message_id: repliedMessage.message_id },
       );
+      const text = repliedMessage.text
+        ? smartypantsu(repliedMessage.text)
+        : smartypantsu(repliedMessage.text);
+      if (text === repliedMessage.text || text === repliedMessage.caption) {
+        await ctx.reply("Nothing to fix.");
+        return;
+      }
       if (repliedMessage.text) {
         await ctx.api.editMessageText(
           ctx.chat.id,
           message.message_id,
-          smartypantsu(repliedMessage.text),
+          text,
           { entities: repliedMessage.entities },
         );
       } else {
         await ctx.api.editMessageCaption(ctx.chat.id, message.message_id, {
-          caption: smartypantsu(repliedMessage.caption),
+          caption: text,
           caption_entities: repliedMessage.caption_entities,
         });
       }

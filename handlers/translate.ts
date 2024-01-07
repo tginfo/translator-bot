@@ -23,7 +23,11 @@ composer
 
     log.info(`Received a post from the ${channel.name}.`);
 
-    if (ctx.entities("hashtag").some((v) => ["#df", "#реклама"].includes(v.text.toLowerCase()))) {
+    if (
+      ctx.entities("hashtag").some((v) =>
+        ["#df", "#реклама"].includes(v.text.toLowerCase())
+      )
+    ) {
       log.info(`Ignored ${postId}.`);
       return;
     }

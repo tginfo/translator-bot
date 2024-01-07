@@ -17,9 +17,15 @@ const composer = new Composer<Context>();
 
 export default composer;
 
-const su = composer.filter(
+const su = composer.branch(
   (ctx): ctx is typeof ctx & { from: NonNullable<(typeof ctx)["from"]> } =>
     !!ctx.from && sudoers.includes(ctx.from.id),
+  (_ctx, next) => {
+    return next();
+  },
+  (ctx) => {
+    return ctx.react("🤡");
+  },
 );
 
 su.command("import", async (ctx) => {
@@ -61,8 +67,8 @@ su.command("export", (ctx) => {
 });
 
 su.command("add", async (ctx) => {
-  const id = ctx.message.text.split(/\s/)[1];
-  const translator = ctx.message.reply_to_message?.from?.id;
+  const id = ctx.msg.text.split(/\s/)[1];
+  const translator = ctx.msg.reply_to_message?.from?.id;
 
   if (!id || !translator) {
     await ctx.reply("Reply to someone and pass the language ID.");
@@ -102,11 +108,11 @@ su.command("add", async (ctx) => {
 });
 
 su.command("rm", async (ctx) => {
-  const id = ctx.message.reply_to_message?.text?.match(
+  const id = ctx.msg.reply_to_message?.text?.match(
     /target language: (..)/i,
   )![1];
 
-  const translatorsToRemove = ctx.message.text
+  const translatorsToRemove = ctx.msg.text
     .split(/\s/)
     .map(Number)
     .filter((t) => t);
@@ -148,7 +154,7 @@ su.command("rm", async (ctx) => {
 });
 
 su.command("stats", async (ctx) => {
-  const id = ctx.message.text.split(/\s/)[1];
+  const id = ctx.msg.text.split(/\s/)[1];
 
   if (id) {
     const language = languages[id];
@@ -186,7 +192,7 @@ su.command("stats", async (ctx) => {
 });
 
 su.command("broadcast", async (ctx) => {
-  const message = ctx.message.reply_to_message;
+  const message = ctx.msg.reply_to_message;
 
   if (!message) {
     await ctx.reply("Reply a message to broadcast.");
