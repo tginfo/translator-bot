@@ -23,8 +23,11 @@ const su = composer.branch(
   (_ctx, next) => {
     return next();
   },
-  (ctx) => {
-    return ctx.react("🤡");
+  async (ctx) => {
+    if (!ctx.entities("bot_command").length) {
+      return;
+    }
+    await ctx.react("🤡");
   },
 );
 
