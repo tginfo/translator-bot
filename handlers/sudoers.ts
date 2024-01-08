@@ -23,9 +23,12 @@ const su = composer.branch(
   (_ctx, next) => {
     return next();
   },
-  async (ctx) => {
-    if (!ctx.entities("bot_command").length) {
-      return;
+  async (ctx, next) => {
+    if (
+      !ctx.chat || ctx.chat.type == "channel" ||
+      !ctx.entities("bot_command").length
+    ) {
+      return next();
     }
     await ctx.react("🤡");
   },

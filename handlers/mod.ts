@@ -11,9 +11,9 @@ const composer = new Composer<Context>();
 
 export default composer;
 
-composer.use(utils);
+composer.use(translate);
 composer.use(callback);
+composer.use(utils);
 composer.use(edit);
 composer.use(sudoers);
-composer.use(translate);
 composer.use(join);
