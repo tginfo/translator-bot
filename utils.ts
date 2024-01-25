@@ -196,6 +196,9 @@ export function unparse(
           }>${text_}</pre>`,
         );
         break;
+      case "blockquote":
+        html.push(`<blockquote>${text_}</blockquote>`);
+        break;
       default:
         skipEntity = true;
     }
