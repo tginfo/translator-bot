@@ -129,6 +129,15 @@ export function escape(s: string) {
   return s;
 }
 
+
+function fixLengths(text: string, entities: MessageEntity[]) {
+  for (const entity of entities) {
+    while (text[entity.offset + entity.length - 1] == '\n') {
+      entity.length--;
+    }
+  }
+}
+
 // Taken from Telethon with some modifications.
 export function unparse(
   text: string,
@@ -138,6 +147,8 @@ export function unparse(
 ): string {
   if (!text) return text;
   else if (entities.length == 0) return escape(text);
+
+  fixLengths(text, entities);
 
   length = length ?? text.length;
 
