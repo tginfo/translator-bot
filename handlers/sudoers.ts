@@ -17,6 +17,8 @@ const composer = new Composer<Context>();
 
 export default composer;
 
+const COMMANDS = ["import", "export", "add", "rm", "stats", "broadcast"];
+
 const su = composer.branch(
   (ctx): ctx is typeof ctx & { from: NonNullable<(typeof ctx)["from"]> } =>
     !!ctx.from && sudoers.includes(ctx.from.id),
@@ -30,7 +32,16 @@ const su = composer.branch(
     ) {
       return next();
     }
-    await ctx.react("🤡");
+    if (
+      COMMANDS.includes(
+        (ctx.msg?.text ?? ctx.msg?.caption)?.slice(
+          0,
+          ctx.entities("bot_command").length,
+        ).slice(1) || "",
+      )
+    ) {
+      await ctx.react("🤡");
+    }
   },
 );
 
