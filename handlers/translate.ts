@@ -40,7 +40,7 @@ composer
         const englishMessage =
           `🖼️⚠️ A post with a long caption was made in ${channel.name}.`;
         await ctx.api.sendMessage(
-          pilotChat,
+          chatId,
           ru
             ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.`
             : englishMessage,
