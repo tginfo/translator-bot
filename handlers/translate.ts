@@ -1,6 +1,6 @@
 import * as log from "std/log/mod.ts";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
-import { channels, languages, pilotChat } from "../data.ts";
+import { channels, copilotsChat, languages, pilotChats } from "../data.ts";
 
 const composer = new Composer();
 
@@ -36,13 +36,18 @@ composer
       log.info(`Ignored ${postId}: caption too long.`);
       try {
         const ru = ctx.chat.id in channels.ru;
+        const chatId = pilotChats[ru ? "ru" : "en"];
+        const englishMessage =
+          `🖼️⚠️ A post with a long caption was made in ${channel.name}.`;
         await ctx.api.sendMessage(
           pilotChat,
           ru
             ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.`
-            : `🖼️⚠️ A post with a long caption was made in ${channel.name}.`,
+            : englishMessage,
         );
         log.info(`Pilots were notified of ${postId}.`);
+        await ctx.api.sendMessage(copilotsChat, englishMessage);
+        log.info(`Copilots were notified of ${postId}.`);
       } catch (err) {
         log.info(`Failed to notify pilots of ${postId}: ${err}`);
       }
