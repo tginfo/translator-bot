@@ -102,4 +102,4 @@ export function dump() {
 
 export const INLINE_INVITE_LINK_NAME = "tgnftrnsltrbtnln";
 
-export const pilotChats = { ru: -1001964648754, en: -1001192070541 } as const;
+export const pilotChat = -1001266712138;

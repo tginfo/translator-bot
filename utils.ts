@@ -129,10 +129,9 @@ export function escape(s: string) {
   return s;
 }
 
-
 function fixLengths(text: string, entities: MessageEntity[]) {
   for (const entity of entities) {
-    while (text[entity.offset + entity.length - 1] == '\n') {
+    while (text[entity.offset + entity.length - 1] == "\n") {
       entity.length--;
     }
   }
