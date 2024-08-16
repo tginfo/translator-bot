@@ -1,6 +1,7 @@
 import * as log from "std/log/mod.ts";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import { channels, copilotsChat, languages, pilotChats } from "../data.ts";
+import env from "../env.ts";
 
 const composer = new Composer();
 
@@ -39,15 +40,17 @@ composer
         const chatId = pilotChats[ru ? "ru" : "en"];
         const englishMessage =
           `🖼️⚠️ A post with a long caption was made in ${channel.name}.`;
-        await ctx.api.sendMessage(
-          chatId,
-          ru
-            ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.`
-            : englishMessage,
-        );
+        await Promise.any([
+          ctx.api.sendMessage(
+            chatId,
+            ru
+              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.`
+              : englishMessage,
+          ),
+          ctx.api.sendMessage(env.NOTIFICATIONS_CHAT, englishMessage),
+          ctx.api.sendMessage(copilotsChat, englishMessage),
+        ]);
         log.info(`Pilots were notified of ${postId}.`);
-        await ctx.api.sendMessage(copilotsChat, englishMessage);
-        log.info(`Copilots were notified of ${postId}.`);
       } catch (err) {
         log.info(`Failed to notify pilots of ${postId}: ${err}`);
       }
