@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import { channels, copilotsChat, languages, pilotChats } from "../data.ts";
 import env from "../env.ts";

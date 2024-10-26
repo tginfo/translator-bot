@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { Composer } from "grammy/mod.ts";
 import { Context } from "../utils.ts";
 import { INLINE_INVITE_LINK_NAME, languages, update } from "../data.ts";

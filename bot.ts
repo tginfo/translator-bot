@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { Bot } from "grammy/mod.ts";
 import { hydrateFiles } from "grammy_files/mod.ts";
 import { Context } from "./utils.ts";

@@ -1,5 +1,5 @@
-import * as log from "std/log/mod.ts";
-import { setColorEnabled } from "std/fmt/colors.ts";
+import * as log from "@std/log";
+import { setColorEnabled } from "@std/fmt/colors";
 
 setColorEnabled(false);
 

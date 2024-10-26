@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {

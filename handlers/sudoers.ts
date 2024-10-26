@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { MINUTE } from "std/datetime/mod.ts";
 import { Composer, InputFile } from "grammy/mod.ts";
 import * as p from "grammy_parse_mode/mod.ts";

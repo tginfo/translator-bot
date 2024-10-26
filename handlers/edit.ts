@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { Composer } from "grammy/mod.ts";
 import * as p from "grammy_parse_mode/mod.ts";
 import { Context } from "../utils.ts";
