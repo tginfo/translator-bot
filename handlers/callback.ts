@@ -180,16 +180,19 @@ cq.callbackQuery(/^send/, async (ctx) => {
 
   const isBeta = ctx.callbackQuery.data.split("_")[1] == "beta";
   const chatId = isBeta ? language.beta : language.main;
+  const destination = isBeta ? "beta" : "main";
 
   let message;
 
   try {
     message = await ctx.copyMessage(chatId);
-    log.info(`[${ctx.from.id}] Sending successful in ${language.id} middle.`);
+    log.info(
+      `[${ctx.from.id}] Sending to ${destination} successful in ${language.id} middle.`,
+    );
   } catch (err) {
     await answerError(ctx, err);
     log.error(
-      `[${ctx.from.id}] Sending unsuccessful in ${language.id} middle: ${err}`,
+      `[${ctx.from.id}] Sending to ${destination} unsuccessful in ${language.id} middle: ${err}`,
     );
     return;
   }
@@ -219,6 +222,7 @@ cq.callbackQuery(/^edit/, async (ctx) => {
   const isBeta = ctx.callbackQuery.data.split("_")[1] == "beta";
   const chatId = isBeta ? language.beta : language.main;
   const messageId = Number(ctx.callbackQuery.data.split("_")[2]);
+  const destination = isBeta ? "beta" : "main";
 
   try {
     if (ctx.callbackQuery.message.text) {
@@ -235,11 +239,13 @@ cq.callbackQuery(/^edit/, async (ctx) => {
       });
     }
 
-    log.info(`[${ctx.from.id}] Editing successful in ${language.id} middle.`);
+    log.info(
+      `[${ctx.from.id}] Editing post of ${destination} successful in ${language.id} middle.`,
+    );
   } catch (err) {
     await answerError(ctx, err);
     log.warning(
-      `[${ctx.from.id}] Editing unsuccessful in ${language.id} middle.`,
+      `[${ctx.from.id}] Editing post of ${destination} unsuccessful in ${language.id} middle.`,
     );
     return;
   }
