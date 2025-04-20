@@ -25,13 +25,12 @@ const su = composer.branch(
   (_ctx, next) => {
     return next();
   },
-  async (ctx, next) => {
+  async (ctx) => {
     if (
       !ctx.chat || ctx.chat.type == "channel" ||
       !ctx.entities("bot_command").length
     ) {
-      // I comment this out because I don't understand that this is for
-      // return next();
+      return;
     }
     if (
       COMMANDS.includes(
@@ -289,6 +288,12 @@ su.inlineQuery(
         });
         inviteLinks.push(invite_link);
       }
+
+      log.info(
+        `[${ctx.from.id}] Invite links generated for ${id}: ${
+          inviteLinks.join(", ")
+        }`,
+      );
 
       const { text, entities } = responseType == "links"
         ? p.fmt`${inviteLinks.join("\n")}`
