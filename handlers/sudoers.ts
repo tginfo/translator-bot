@@ -30,7 +30,8 @@ const su = composer.branch(
       !ctx.chat || ctx.chat.type == "channel" ||
       !ctx.entities("bot_command").length
     ) {
-      return next();
+      // I comment this out because I don't understand that this is for
+      // return next();
     }
     if (
       COMMANDS.includes(
