@@ -5,7 +5,7 @@ import {
   MessageEntity,
 } from "grammy/types.ts";
 import { FileFlavor } from "grammy_files/mod.ts";
-import { Language, languages } from "./data.ts";
+import { Language, languages, supervisors } from "./data.ts";
 
 export type Context = FileFlavor<Context_>;
 
@@ -32,6 +32,7 @@ export async function findLanguage(
     chat: NonNullable<Context["chat"]>;
     from: NonNullable<Context["from"]>;
   },
+  supervisor?: true
 ): Promise<Language & { id: string }> {
   const filteredLanguage = Object.entries(languages).filter(
     ([_, { edit }]) => edit == ctx.chat.id,
@@ -46,6 +47,11 @@ export async function findLanguage(
 
   if (!language.translators.includes(ctx.from.id)) {
     await answer(ctx, "Action not allowed.");
+    throw new Error("ActionNotAllowed");
+  }
+
+  if (supervisor && supervisors[id]?.includes(ctx.from.id)) {
+    await answer(ctx, "This is only for supervisors.");
     throw new Error("ActionNotAllowed");
   }
 

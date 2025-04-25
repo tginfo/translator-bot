@@ -8,6 +8,7 @@ import {
   INLINE_INVITE_LINK_NAME,
   languages,
   sudoers,
+  supervisors,
   support,
   update,
   updateWithFileData,
@@ -88,7 +89,7 @@ su.command("add", async (ctx) => {
   const translator = ctx.msg.reply_to_message?.from?.id;
 
   if (!id || !translator) {
-    await ctx.reply("Reply to someone and pass the language ID.");
+    await ctx.reply("Reply to someone and pass a language ID.");
     return;
   }
 
@@ -100,7 +101,7 @@ su.command("add", async (ctx) => {
   }
 
   if (language.translators.includes(translator)) {
-    await ctx.reply("The replied user is already a translator.");
+    await ctx.reply("This user is already a translator.");
     return;
   }
 
@@ -127,7 +128,7 @@ su.command("add", async (ctx) => {
 su.command("rm", async (ctx) => {
   const id = ctx.msg.reply_to_message?.text?.match(
     /target language: (..)/i,
-  )![1];
+  )?.[1]!;
 
   const translatorsToRemove = ctx.msg.text
     .split(/\s/)
@@ -151,6 +152,9 @@ su.command("rm", async (ctx) => {
   const newTranslators = language.translators.filter(
     (t) => !translatorsToRemove.includes(t),
   );
+  const newSupervisors = (supervisors[id] ?? []).filter(
+    (t) => !translatorsToRemove.includes(t),
+  );
 
   const diff = language.translators.length - newTranslators.length;
 
@@ -162,12 +166,83 @@ su.command("rm", async (ctx) => {
     return;
   }
 
-  await update((languages) => {
+  await update((languages, _, supervisors) => {
     languages[id].translators = newTranslators;
+    supervisors[id] = newSupervisors;
   });
 
   log.info(`Removed ${diffText} from ${id}.`);
   await ctx.reply(`Removed ${diffText} from ${id}.`);
+});
+
+su.command("promote", async (ctx) => {
+  const id = ctx.msg.text.split(/\s/)[1];
+  const translator = ctx.msg.reply_to_message?.from?.id;
+
+  if (!id || !translator) {
+    await ctx.reply("Reply to someone and pass a language ID.");
+    return;
+  }
+
+  const language = languages[id];
+
+  if (typeof language === "undefined") {
+    await ctx.reply(`Language ${id} not found.`);
+    return;
+  }
+
+  if (!language.translators.includes(translator)) {
+    await ctx.reply("This user is not a translator.");
+    return;
+  }
+
+  if (supervisors[id]?.includes(translator)) {
+    await ctx.reply("This user is already promoted.");
+    return;
+  }
+
+  await update((_, __, supervisors) => {
+    supervisors[id] ??= []
+    supervisors[id].push(translator);
+  });
+
+  log.info(`Promoted ${translator} to supervisor in ${id}.`);
+  await ctx.reply(`Promoted in ${id}.`);
+});
+
+su.command("demote", async (ctx) => {
+  const id = ctx.msg.text.split(/\s/)[1];
+  const translator = ctx.msg.reply_to_message?.from?.id;
+
+  if (!id || !translator) {
+    await ctx.reply("Reply to someone and pass a language ID.");
+    return;
+  }
+
+  const language = languages[id];
+
+  if (typeof language === "undefined") {
+    await ctx.reply(`Language ${id} not found.`);
+    return;
+  }
+
+  if (!language.translators.includes(translator)) {
+    await ctx.reply("This user is not a translator.");
+    return;
+  }
+
+  if (!supervisors[id]?.includes(translator)) {
+    await ctx.reply("This user is not promoted.");
+    return;
+  }
+
+  await update((_, __, supervisors) => {
+    supervisors[id] ??= []
+    supervisors[id] = supervisors[id].filter((v) => v != translator);
+  });
+
+  log.info(`Demoted ${translator} from supervisor in ${id}.`);
+  await ctx.reply(`Demoted in ${id}.`);
 });
 
 su.command("stats", async (ctx) => {
@@ -188,6 +263,11 @@ su.command("stats", async (ctx) => {
             language.translators.length == 0
               ? "None"
               : language.translators.map(getUserLink).join(", ")
+          }\n` +
+          `Supervisors: ${
+            !supervisors[id]?.length
+              ? "None"
+              : supervisors[id].map(getUserLink).join(", ")
           }`,
         { parse_mode: "HTML" },
       );

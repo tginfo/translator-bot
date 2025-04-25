@@ -10,6 +10,8 @@ export interface Language {
   beta: number;
 }
 
+export type Supervisors = Record<string, number[] | undefined>
+
 let paths = new Array<string>();
 
 for await (const entry of Deno.readDir("./")) {
@@ -41,6 +43,8 @@ export const languages: Record<string, Language> = data.languages;
 
 export const sudoers: Sudoer[] = data.sudoers;
 
+export const supervisors: Supervisors = data.supervisors ?? [];
+
 export const support = -1001266712138;
 
 export const channels: Record<
@@ -63,15 +67,16 @@ export async function update(
   func: (
     languages: Record<string, Language>,
     sudoers: Sudoer[],
+    supervisors: Supervisors,
   ) => Promise<void> | void,
 ) {
-  const result = func(languages, sudoers);
+  const result = func(languages, sudoers, supervisors);
 
   result instanceof Promise && (await result);
 
   await Deno.writeTextFile(
     `data-${Date.now()}.json`,
-    JSON.stringify({ languages, sudoers }),
+    JSON.stringify({ languages, sudoers, supervisors }),
   );
 }
 
