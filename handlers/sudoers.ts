@@ -202,7 +202,7 @@ su.command("promote", async (ctx) => {
   }
 
   await update((_, __, supervisors) => {
-    supervisors[id] ??= []
+    supervisors[id] ??= [];
     supervisors[id].push(translator);
   });
 
@@ -237,7 +237,7 @@ su.command("demote", async (ctx) => {
   }
 
   await update((_, __, supervisors) => {
-    supervisors[id] ??= []
+    supervisors[id] ??= [];
     supervisors[id] = supervisors[id].filter((v) => v != translator);
   });
 

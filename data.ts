@@ -10,7 +10,7 @@ export interface Language {
   beta: number;
 }
 
-export type Supervisors = Record<string, number[] | undefined>
+export type Supervisors = Record<string, number[] | undefined>;
 
 let paths = new Array<string>();
 

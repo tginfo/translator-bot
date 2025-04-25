@@ -32,7 +32,7 @@ export async function findLanguage(
     chat: NonNullable<Context["chat"]>;
     from: NonNullable<Context["from"]>;
   },
-  supervisor?: true
+  supervisor?: true,
 ): Promise<Language & { id: string }> {
   const filteredLanguage = Object.entries(languages).filter(
     ([_, { edit }]) => edit == ctx.chat.id,
