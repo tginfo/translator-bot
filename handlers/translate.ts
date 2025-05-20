@@ -26,7 +26,7 @@ composer
 
     if (
       ctx.entities("hashtag").some((v) =>
-        ["#df", "#реклама", "#промо"].includes(v.text.toLowerCase())
+        ["#ad", "#df", "#реклама", "#промо"].includes(v.text.toLowerCase())
       )
     ) {
       log.info(`Ignored ${postId}.`);
