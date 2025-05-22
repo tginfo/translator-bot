@@ -171,7 +171,7 @@ cq.callbackQuery("delete", async (ctx) => {
 });
 
 cq.callbackQuery(/^send/, async (ctx) => {
-  const language = await findLanguage(ctx, true);
+  const language = await findLanguage(ctx);
 
   if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
     await answer(ctx, "Can't send idled post.");
@@ -212,7 +212,7 @@ cq.callbackQuery(/^send/, async (ctx) => {
 });
 
 cq.callbackQuery(/^edit/, async (ctx) => {
-  const language = await findLanguage(ctx, true);
+  const language = await findLanguage(ctx);
 
   if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
     await answer(ctx, "Can't edit idled post.");
