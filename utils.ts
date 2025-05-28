@@ -50,7 +50,10 @@ export async function findLanguage(
     throw new Error("ActionNotAllowed");
   }
 
-  if (supervisor && !supervisors[id]?.includes(ctx.from.id)) {
+  if (
+    language.supervisorsEnabled && supervisor &&
+    !supervisors[id]?.includes(ctx.from.id)
+  ) {
     await answer(ctx, "This is only for supervisors.");
     throw new Error("ActionNotAllowed");
   }

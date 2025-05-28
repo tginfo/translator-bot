@@ -8,6 +8,7 @@ export interface Language {
   translators: number[];
   main: number;
   beta: number;
+  supervisorsEnabled?: boolean;
 }
 
 export type Supervisors = Record<string, number[] | undefined>;

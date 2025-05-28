@@ -288,6 +288,52 @@ su.command("stats", async (ctx) => {
   );
 });
 
+su.command("enable_supervisors", async (ctx) => {
+  const id = ctx.msg.text.split(/\s/)[1];
+  if (!id) {
+    return;
+  }
+  const language = languages[id];
+  if (!language) {
+    await ctx.reply(`Language ${id} not found.`);
+    return;
+  }
+
+  if (language.supervisorsEnabled) {
+    await ctx.reply(`Supervisors are already enabled for ${id}.`);
+    return;
+  }
+
+  await update((languages) => {
+    languages[id].supervisorsEnabled = true;
+  });
+  log.info(`[${ctx.from?.id}] Enabled supervisors for ${id}.`);
+  await ctx.reply(`Enabled supervisors for ${id}.`);
+});
+
+su.command("disable_supervisors", async (ctx) => {
+  const id = ctx.msg.text.split(/\s/)[1];
+  if (!id) {
+    return;
+  }
+  const language = languages[id];
+  if (!language) {
+    await ctx.reply(`Language ${id} not found.`);
+    return;
+  }
+
+  if (!language.supervisorsEnabled) {
+    await ctx.reply(`Supervisors are already disabled for ${id}.`);
+    return;
+  }
+
+  await update((languages) => {
+    languages[id].supervisorsEnabled = false;
+  });
+  log.info(`[${ctx.from?.id}] Disabled supervisors for ${id}.`);
+  await ctx.reply(`Disabled supervisors for ${id}.`);
+});
+
 su.command("broadcast", async (ctx) => {
   const message = ctx.msg.reply_to_message;
 
