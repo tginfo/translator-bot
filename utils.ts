@@ -6,6 +6,7 @@ import {
 } from "grammy/types.ts";
 import { FileFlavor } from "grammy_files/mod.ts";
 import { Language, languages, supervisors } from "./data.ts";
+import * as p from "grammy_parse_mode/mod.ts";
 
 export type Context = FileFlavor<Context_>;
 
@@ -254,4 +255,16 @@ export function fixText(text: string, isZh?: boolean) {
 
 export function isZh(targetLang?: string) {
   return !!targetLang?.toLowerCase().startsWith("zh");
+}
+
+export function linkMessage(chatId: number, messageId: number) {
+  const entity = p.fmt`${p.linkMessage("A", chatId, messageId)}`.entities[0];
+  if (!entity || !("url" in entity)) {
+    return "https://tginfo.me/";
+  }
+  try {
+    return new URL(entity.url).href;
+  } catch {
+    return "https://tginfo.me/";
+  }
 }

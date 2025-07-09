@@ -6,6 +6,7 @@ import {
   fixTrans,
   hasButton,
   isZh,
+  linkMessage,
   removeButton,
   replaceButton,
   unparse,
@@ -108,4 +109,13 @@ Deno.test("isZh", () => {
   assertEquals(isZh("zh"), true);
   assertEquals(isZh("zh-CN"), true);
   assertEquals(isZh("zh-HK"), true);
+});
+
+Deno.test("linkMessage", () => {
+  assertEquals(linkMessage(1, 1), "https://tginfo.me/");
+  assertEquals(linkMessage(1000000000000, 1), "https://tginfo.me/");
+  assertEquals(
+    linkMessage(-1001202070500, 101),
+    "https://t.me/c/1202070500/101",
+  );
 });

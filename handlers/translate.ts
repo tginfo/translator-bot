@@ -2,6 +2,7 @@ import * as log from "@std/log";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import { channels, copilotsChat, languages, pilotChats } from "../data.ts";
 import env from "../env.ts";
+import { linkMessage } from "../utils.ts";
 
 const composer = new Composer();
 
@@ -57,6 +58,32 @@ composer
       return;
     }
 
+    const ru = ctx.chat.id in channels.ru;
+    if (ru && ctx.channelPost.reply_to_message) {
+      log.info(
+        `Notifying English pilots about ${postId}: replies to another post.`,
+      );
+      try {
+        const chatId = pilotChats.en;
+        const englishMessage =
+          `🖼️⚠️ The last post in ${channel.name} replies to another post.`;
+        const reply_markup = new InlineKeyboard().url(
+          "View Replied Post",
+          linkMessage(ctx.chat.id, ctx.channelPost.reply_to_message.message_id),
+        );
+        await Promise.any([
+          ctx.api.sendMessage(chatId, englishMessage, { reply_markup }),
+          ctx.api.sendMessage(env.NOTIFICATIONS_CHAT, englishMessage, {
+            reply_markup,
+          }),
+          ctx.api.sendMessage(copilotsChat, englishMessage, { reply_markup }),
+        ]);
+        log.info(`Pilots were notified of ${postId}.`);
+      } catch (err) {
+        log.info(`Failed to notify pilots of ${postId}: ${err}`);
+      }
+    }
+
     log.info(`Copying ${postId}...`);
 
     const t1 = Date.now();
@@ -71,16 +98,32 @@ composer
       }
 
       try {
+        const reply_markup = new InlineKeyboard()
+          .text("Translate", "translate")
+          .row()
+          .text(
+            `Send to ${isBeta ? "Beta" : "Main"} Channel`,
+            `send_${isBeta ? "beta" : "tg"}`,
+          );
+
+        if (ctx.channelPost.reply_to_message) {
+          reply_markup
+            .row()
+            .url(
+              "View Replied Post",
+              linkMessage(
+                ctx.chat.id,
+                ctx.channelPost.reply_to_message.message_id,
+              ),
+            );
+        }
+
+        reply_markup
+          .row()
+          .text("Idle", "idle");
+
         await ctx.copyMessage(language.edit, {
-          reply_markup: new InlineKeyboard()
-            .text("Translate", "translate")
-            .row()
-            .text(
-              `Send to ${isBeta ? "Beta" : "Main"} Channel`,
-              `send_${isBeta ? "beta" : "tg"}`,
-            )
-            .row()
-            .text("Idle", "idle"),
+          reply_markup,
         });
 
         log.info(`Copied ${postId} to ${id} middle.`);
