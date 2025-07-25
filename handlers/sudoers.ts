@@ -127,7 +127,7 @@ su.command("add", async (ctx) => {
 
 su.command("rm", async (ctx) => {
   const id = ctx.msg.reply_to_message?.text?.match(
-    /target language: (..)/i,
+    /target language: (...?)/i,
   )?.[1]!;
 
   const translatorsToRemove = ctx.msg.text
