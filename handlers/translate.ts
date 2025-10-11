@@ -40,12 +40,18 @@ composer
         const ru = ctx.chat.id in channels.ru;
         const chatId = pilotChats[ru ? "ru" : "en"];
         const englishMessage =
-          `🖼️⚠️ A post with a long caption was made in ${channel.name}.`;
+            `🖼️⚠️ A post with a long caption was made in ${channel.name}.` +
+            (channel.flags?.includes("alt")
+                ? " \n🛑 THE POST WAS NOT FORWARDED TO TRANSLATORS. SEND A NEW POST TO ALT CHANNEL THAT FITS THE REQUIREMENTS."
+                : "");
         await Promise.any([
           ctx.api.sendMessage(
             chatId,
             ru
-              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.`
+              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.` + 
+                (channel.flags?.includes("alt")
+                  ? " \n🛑 ПОСТ НЕ ПЕРЕСЛАН ПЕРЕВОДЧИКАМ. ИСПРАВЬТЕ ПОСТ И ОТПРАВЬТЕ ЕГО В АЛЬТ КАНАЛ ЗАНОВО."
+                  : "")
               : englishMessage,
           ),
           ctx.api.sendMessage(env.NOTIFICATIONS_CHAT, englishMessage),
