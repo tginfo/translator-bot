@@ -103,7 +103,7 @@ export async function updateWithFileData(data: any) {
 }
 
 export function dump() {
-  return new TextEncoder().encode(JSON.stringify({ languages, sudoers }));
+  return new TextEncoder().encode(JSON.stringify({ languages, sudoers, supervisors }));
 }
 
 export const INLINE_INVITE_LINK_NAME = "tgnftrnsltrbtnln";
