@@ -117,7 +117,7 @@ export function hasButton(
     for (const i in x) {
       const y = x[i] as InlineKeyboardButton.CallbackButton;
 
-      if (y.callback_data.includes(callbackData)) {
+      if (y.callback_data?.includes(callbackData)) {
         return true;
       }
     }
