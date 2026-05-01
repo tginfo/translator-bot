@@ -9,6 +9,7 @@ export interface Language {
   main: number;
   beta: number;
   supervisorsEnabled?: boolean;
+  shouldBetaApkSkipMiddleChannel?: boolean;
 }
 
 export type Supervisors = Record<string, number[] | undefined>;

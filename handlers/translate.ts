@@ -1,5 +1,5 @@
 import * as log from "@std/log";
-import { Composer, InlineKeyboard } from "grammy/mod.ts";
+import { Composer, InlineKeyboard, Filter, Context } from "grammy/mod.ts";
 import { channels, copilotsChat, languages, pilotChats } from "../data.ts";
 import env from "../env.ts";
 import { linkMessage } from "../utils.ts";
@@ -15,7 +15,7 @@ composer
       String(ctx.chat.id),
     )
   )
-  .use(async (ctx) => {
+  .use(async (ctx: Filter<Context, "channel_post:text" | "channel_post:caption">) => {
     const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
     const isBeta = channel.flags?.includes("beta") ||
       (channel.flags?.includes("alt") &&
@@ -101,6 +101,20 @@ composer
 
       if (!Object.keys(channels[language.from]).includes(String(ctx.chat.id))) {
         continue;
+      }
+
+      // Some translators want to post APKs in Beta Info channel immediately,
+      // without translating the changelogs.
+      if (isBeta && ctx.msg.document && language.shouldBetaApkSkipMiddleChannel) {
+        log.info(`A file was posted (${postId}) to Beta and language ${id} has auto APK enabled`)
+        const fileName = ctx.msg.document.file_name;
+        
+        if (fileName && fileName.toLowerCase().endsWith(".apk")) {
+          log.info(`Detected the file to be an APK, posting to ${language.beta}`)
+          await ctx.copyMessage(language.beta);
+        } else {
+          log.info("Detected the file to not be an APK, skipping auto-post")
+        }
       }
 
       try {
