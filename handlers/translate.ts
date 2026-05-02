@@ -111,10 +111,16 @@ composer
         
         if (fileName && fileName.toLowerCase().endsWith(".apk")) {
           log.info(`Detected the file to be an APK, posting to ${language.beta}`)
-          await ctx.copyMessage(language.beta);
+          try {
+            await ctx.copyMessage(language.beta);
+          } catch (e) {
+            log.error(`Failed to post APK ${postId}: ${e}`);
+          }
         } else {
           log.info("Detected the file to not be an APK, skipping auto-post")
         }
+        
+        return;
       }
 
       try {
