@@ -120,7 +120,7 @@ composer
           log.info("Detected the file to not be an APK, skipping auto-post")
         }
         
-        return;
+        continue;
       }
 
       try {
