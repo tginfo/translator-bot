@@ -73,7 +73,12 @@ composer
         const chatId = pilotChats.en;
         const englishMessage =
           `🖼️⚠️ The last post in ${channel.name} replies to another post.`;
-        const reply_markup = new InlineKeyboard().url(
+        const reply_markup = new InlineKeyboard()
+	.url(
+	  "View Post",
+	  linkMessage(ctx.chat.id, ctx.channelPost.message_id)
+	)
+	.url(
           "View Replied Post",
           linkMessage(ctx.chat.id, ctx.channelPost.reply_to_message.message_id),
         );
