@@ -5,7 +5,6 @@ import {
   answer,
   answerError,
   Context,
-  escape,
   findLanguage,
   hasButton,
   removeButton,
@@ -63,7 +62,7 @@ cq.callbackQuery("translate", async (ctx) => {
       `[${ctx.from.id}] Request to Google Translate successful for ${language.id} middle.`,
     );
   } catch (err) {
-    translation = `An error occurred while translating.\n\n${escape(err)}`;
+    translation = `An error occurred while translating.\n\n${err}`;
     log.warning(
       `[${ctx.from.id}] Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
     );
@@ -143,7 +142,7 @@ cq.callbackQuery("alt-translate", async (ctx) => {
       `[${ctx.from.id}] Alternative request to Google Translate successful for ${language.id} middle.`,
     );
   } catch (err) {
-    translation = `An error occurred while translating.\n\n${escape(err)}`;
+    translation = `An error occurred while translating.\n\n${err}`;
     log.warning(
       `[${ctx.from.id}] Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
     );
