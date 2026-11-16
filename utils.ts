@@ -4,7 +4,7 @@ import {
   InlineKeyboardMarkup,
   MessageEntity,
 } from "grammy/types.ts";
-import { FileFlavor } from "grammy_files/mod.ts";
+import { FileFlavor } from "grammy_files";
 import { Language, languages, supervisors } from "./data.ts";
 import * as p from "grammy_parse_mode/mod.ts";
 

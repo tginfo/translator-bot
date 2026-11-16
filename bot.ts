@@ -1,13 +1,17 @@
 import * as log from "@std/log";
 import { Bot } from "grammy/mod.ts";
-import { hydrateFiles } from "grammy_files/mod.ts";
+import { hydrateFiles } from "grammy_files";
 import { Context } from "./utils.ts";
 import handlers from "./handlers/mod.ts";
 import env from "./env.ts";
 
 const bot = new Bot<Context>(env.BOT_TOKEN);
 
-bot.catch(({ error }) => log.warning(String(error)));
+bot.catch(({ error }) => {
+	console.trace(error);
+	console.log(error?.stack);
+	console.log(error?.cause);
+});
 
 bot.api.config.use(hydrateFiles(bot.token));
 
