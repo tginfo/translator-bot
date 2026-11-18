@@ -259,14 +259,14 @@ cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
   }
 
   const text = unparse(
-    ctx.callbackQuery.message.text! ?? ctx.callbackQuery.message.caption,
+    ctx.callbackQuery.message.text ?? ctx.callbackQuery.message.caption ?? "",
     ctx.callbackQuery.message.entities ??
       ctx.callbackQuery.message.caption_entities ?? [],
-  );
-  let newText = text;
-  while (/ {2,}/.test(newText)) {
-    newText = newText.replace(/ {2,}/g, " ");
-  }
+  ).replace(/<br>/g, "\n");
+
+  const newText = text
+    .replace(/ {2,}/g, " ")
+    .replace(/\n /g, "\n");
 
   removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
 
