@@ -1,12 +1,14 @@
 {
   "lock": false,
   "imports": {
+    "@google-cloud/translate": "npm:@google-cloud/translate@^10.3.0",
     "@std/assert": "jsr:@std/assert@^1.0.6",
     "@std/datetime": "jsr:@std/datetime@^0.225.2",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
     "@std/fmt": "jsr:@std/fmt@^1.0.3",
     "@std/log": "jsr:@std/log@0.213.0",
     "envalid/": "https://deno.land/x/envalid@0.1.2/",
+    "google-gax": "npm:google-gax@^6.17.0",
     "grammy/": "https://deno.land/x/grammy@v1.20.3/",
     "grammy_files": "npm:@grammyjs/files@1.2.0",
     "grammy_parse_mode/": "https://deno.land/x/grammy_parse_mode@1.9.0/",

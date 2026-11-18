@@ -13,6 +13,7 @@ export interface Language {
 }
 
 export type Supervisors = Record<string, number[] | undefined>;
+export type UserSettings = { cloudTranslateQuota?: number, cloudTranslateQuotaDuration?: number };
 
 let paths = new Array<string>();
 
@@ -47,6 +48,8 @@ export const sudoers: Sudoer[] = data.sudoers;
 
 export const supervisors: Supervisors = data.supervisors ?? [];
 
+export const userSettings: Record<string, UserSettings> = data.userSettings ?? {};
+
 export const support = -1001266712138;
 
 export const channels: Record<
@@ -70,15 +73,16 @@ export async function update(
     languages: Record<string, Language>,
     sudoers: Sudoer[],
     supervisors: Supervisors,
+    userSettings: Record<string, UserSettings>,
   ) => Promise<void> | void,
 ) {
-  const result = func(languages, sudoers, supervisors);
+  const result = func(languages, sudoers, supervisors, userSettings);
 
   result instanceof Promise && (await result);
 
   await Deno.writeTextFile(
     `data-${Date.now()}.json`,
-    JSON.stringify({ languages, sudoers, supervisors }),
+    JSON.stringify({ languages, sudoers, supervisors, userSettings }),
   );
 }
 

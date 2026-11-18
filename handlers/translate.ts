@@ -40,7 +40,7 @@ composer
         const ru = ctx.chat.id in channels.ru;
         const chatId = pilotChats[ru ? "ru" : "en"];
         const englishMessage =
-            `🖼️⚠️ A post with a long caption was made in ${channel.name}.` +
+            `🖼️⚠️ A post with a long caption was made in ${channel.name}. English editors are expected to forward an adapted version to enAlt` +
             (channel.flags?.includes("alt")
                 ? " \n🛑 THE POST WAS NOT FORWARDED TO TRANSLATORS. SEND A NEW POST TO ALT CHANNEL THAT FITS THE REQUIREMENTS."
                 : "");
@@ -48,7 +48,7 @@ composer
           ctx.api.sendMessage(
             chatId,
             ru
-              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью.` + 
+              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью. Не забудьте переслать его в ruAlt с картинкой через ссылку.` + 
                 (channel.flags?.includes("alt")
                   ? " \n🛑 ПОСТ НЕ ПЕРЕСЛАН ПЕРЕВОДЧИКАМ. ИСПРАВЬТЕ ПОСТ И ОТПРАВЬТЕ ЕГО В АЛЬТ КАНАЛ ЗАНОВО."
                   : "")

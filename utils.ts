@@ -5,7 +5,7 @@ import {
   MessageEntity,
 } from "grammy/types.ts";
 import { FileFlavor } from "grammy_files";
-import { Language, languages, supervisors } from "./data.ts";
+import { Language, languages, supervisors, UserSettings, userSettings } from "./data.ts";
 import * as p from "grammy_parse_mode/mod.ts";
 
 export type Context = FileFlavor<Context_>;
@@ -28,13 +28,15 @@ export function answerError(ctx: Context, err: unknown) {
   }
 }
 
+export type TranslatorInfo = Language & { id: string, userSettings: UserSettings, userId: number };
+
 export async function findLanguage(
   ctx: Context & {
     chat: NonNullable<Context["chat"]>;
     from: NonNullable<Context["from"]>;
   },
   supervisor?: true,
-): Promise<Language & { id: string }> {
+): Promise<TranslatorInfo> {
   const filteredLanguage = Object.entries(languages).filter(
     ([_, { edit }]) => edit == ctx.chat.id,
   )[0];
@@ -59,7 +61,17 @@ export async function findLanguage(
     throw new Error("ActionNotAllowed");
   }
 
-  return { ...language, id };
+  const userSettings = unsafeGetUserSettings(ctx.from.id);
+
+  return { ...language, id, userSettings, userId: ctx.from.id };
+}
+
+function unsafeGetUserSettings(userId: string | number) {
+  const userKey = String(userId);
+  const settings = userSettings[userKey];
+
+  if (!settings) return {};
+  return settings;
 }
 
 export function removeButton(
