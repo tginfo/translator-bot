@@ -261,6 +261,8 @@ export function fixTrans(trans: string, isZh?: boolean) {
 
   trans = trans.replace(/< ?pre class ?= ?"(.+)" ?> ?/g, '<pre class="$1">');
 
+  trans = trans.replace(/<br>/g, "\n");
+
   if (isZh) trans = trans.replace(/微信/g, "Telegram");
 
   return trans;
