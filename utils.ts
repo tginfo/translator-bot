@@ -142,12 +142,15 @@ export function getUserLink(id: number) {
   return `<a href="tg://user?id=${id}">${id}</>`;
 }
 
-export function escape(s: string) {
+export function escape(s: string, inPre = false) {
   s = s.replace(/&/g, "&amp;");
   s = s.replace(/</g, "&lt;");
   s = s.replace(/>/g, "&gt;");
   s = s.replace(/"/g, "&quot;");
   s = s.replace(/\'/g, "&#x27;");
+  if (!inPre) {
+    s = s.replace(/\r?\n/g, "<br>");
+  }
   return s;
 }
 
@@ -165,9 +168,10 @@ export function unparse(
   entities: MessageEntity[],
   offset = 0,
   length?: number,
+  inPre = false,
 ): string {
   if (!text) return text;
-  else if (entities.length == 0) return escape(text);
+  else if (entities.length == 0) return escape(text, inPre);
 
   fixLengths(text, entities);
 
@@ -184,16 +188,18 @@ export function unparse(
     const relativeOffset = entity.offset - offset;
 
     if (relativeOffset > lastOffset) {
-      html.push(escape(text.slice(lastOffset, relativeOffset)));
+      html.push(escape(text.slice(lastOffset, relativeOffset), inPre));
     } else if (relativeOffset < lastOffset) continue;
 
     let skipEntity = false;
     const length_ = entity.length;
+    const isPre = inPre || entity.type === "pre";
     const text_ = unparse(
       text.slice(relativeOffset, relativeOffset + length_),
       entities.slice(i + 1, entities.length),
       entity.offset,
       length_,
+      isPre,
     );
 
     switch (entity.type) {
@@ -224,7 +230,7 @@ export function unparse(
       case "pre":
         html.push(
           `<pre${
-            entity.language && ` class="${entity.language}"`
+            entity.language ? ` class="${entity.language}"` : ""
           }>${text_}</pre>`,
         );
         break;
@@ -238,13 +244,13 @@ export function unparse(
     lastOffset = relativeOffset + (skipEntity ? 0 : length_);
   }
 
-  html.push(escape(text.slice(lastOffset, text.length)));
+  html.push(escape(text.slice(lastOffset, text.length), inPre));
 
   return html.join("");
 }
 
 export function fixTrans(trans: string, isZh?: boolean) {
-  for (const tag of ["b", "i", "u", "s", "a", "span", "code", "pre"]) {
+  for (const tag of ["b", "i", "u", "s", "a", "span", "code", "pre", "br"]) {
     trans = trans.replace(new RegExp(`< ?${tag} ?> ?`, "g"), `<${tag}>`);
     trans = trans.replace(new RegExp(` ?< ?/ ?${tag} ?>`, "g"), `</${tag}>`);
   }
