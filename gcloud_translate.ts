@@ -1,3 +1,4 @@
+
 import gax from "google-gax";
 import { TranslationServiceClient } from "@google-cloud/translate";
 import env from "./env.ts";
@@ -20,9 +21,7 @@ export interface GoogleCloudTranslationResult extends GoogleCloudTranslationPayl
     statusMessage?: string;
 }
 
-type gCloudTranslateUser = { dates: Date[] };
-
-const gCloudTranslateUsage: Record<string, gCloudTranslateUser> = {};
+const gCloudTranslateUsage = new Map<string, number[]>();
 
 export class CloudTranslationError extends Error {
     constructor(message: string, type: string, nextRequest: string) {
@@ -34,49 +33,59 @@ export class CloudTranslationError extends Error {
     nextRequest: string;
 }
 
+function reserveQuota(key: string, quota: number, durationMs: number): () => void {
+    const now = Date.now();
+    const cutoff = now - durationMs;
+
+    const timestamps = (gCloudTranslateUsage.get(key) ?? []).filter((t) => t > cutoff);
+
+    if (timestamps.length >= quota) {
+        gCloudTranslateUsage.set(key, timestamps);
+        const nextReq = quota > 0
+            ? new Date(timestamps[timestamps.length - quota] + durationMs).toISOString()
+            : "NEVER";
+        throw new CloudTranslationError(
+            `User ${key} is over quota: ${timestamps.length} out of ${quota}. Next available request: ${nextReq}`,
+            "QUOTA",
+            nextReq,
+        );
+    }
+
+    timestamps.push(now);
+    gCloudTranslateUsage.set(key, timestamps);
+
+    return () => {
+        const arr = gCloudTranslateUsage.get(key);
+        const idx = arr?.indexOf(now) ?? -1;
+        if (arr && idx !== -1) arr.splice(idx, 1);
+    };
+}
+
 export async function gCloudTranslate(
     payload: GoogleCloudTranslationPayload,
 ): Promise<GoogleCloudTranslationResult> {
     const userQuotaKey = String(payload.requestUser.userId);
-
-    if (!(userQuotaKey in gCloudTranslateUsage)) {
-        gCloudTranslateUsage[userQuotaKey] = { dates: [] };
-    }
-
     const userQuota = payload.requestUser.userSettings.cloudTranslateQuota ?? 10;
-    const userQuotaDuration = payload.requestUser.userSettings.cloudTranslateQuotaDuration ?? 1000 * 60 * 60 * 24;
+    const userQuotaDuration =
+        payload.requestUser.userSettings.cloudTranslateQuotaDuration ?? 1000 * 60 * 60 * 24;
 
-    gCloudTranslateUsage[userQuotaKey].dates.sort((a, b) => a.getTime() - b.getTime());
-    const currentUsage = gCloudTranslateUsage[userQuotaKey].dates;
+    const refund = reserveQuota(userQuotaKey, userQuota, userQuotaDuration);
 
-    const usageCutoff = new Date(Date.now() - userQuotaDuration);
-    for (let i = 0; i < currentUsage.length; i++) {
-        if (currentUsage[i] <= usageCutoff) delete currentUsage[i];
-    }
+    const [response] = await client
+        .translateText({
+            parent: `projects/${projectId}/locations/${location}`,
+            contents: [payload.content],
+            mimeType: "text/html",
+            sourceLanguageCode: payload.sourceLanguage,
+            targetLanguageCode: payload.targetLanguage,
+            model: `projects/${projectId}/locations/${location}/models/general/translation-llm`,
+            labels: { user: userQuotaKey },
+        })
+        .catch((err) => {
+            refund();
+            throw err;
+        });
 
-    if (currentUsage.length >= userQuota) {
-        const oldestRequest = currentUsage[0];
-        let nextReq = "NEVER";
-
-        if (oldestRequest) {
-            nextReq = new Date(oldestRequest.getTime() + userQuotaDuration).toISOString();
-        }
-        
-        throw new CloudTranslationError(`User ${payload.requestUser.userId} is over quota: ${currentUsage.length} out of ${userQuota}. Next available request: ${nextReq}`, 'QUOTA', nextReq);
-    }
-    
-
-    const responseIterator = await client.translateText({
-        parent: `projects/${projectId}/locations/${location}`,
-        contents: [payload.content],
-        mimeType: "text/html",
-        sourceLanguageCode: payload.sourceLanguage,
-        targetLanguageCode: payload.targetLanguage,
-        model: `projects/${projectId}/locations/${location}/models/general/translation-llm`,
-        labels: { user: userQuotaKey },
-    });
-
-    const response = responseIterator[0];
     const translation = response?.translations?.[0];
     const result = translation?.translatedText;
 
