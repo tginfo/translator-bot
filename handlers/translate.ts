@@ -39,17 +39,25 @@ composer
       try {
         const ru = ctx.chat.id in channels.ru;
         const chatId = pilotChats[ru ? "ru" : "en"];
+        const isBetaChannel = channel.flags?.includes("beta");
+        const isAltChannel = channel.flags?.includes("alt");
         const englishMessage =
-            `🖼️⚠️ A post with a long caption was made in ${channel.name}. English editors are expected to forward an adapted version to enAlt` +
-            (channel.flags?.includes("alt")
+            `🖼️⚠️ A post with a long caption was made in ${channel.name}. English editors are expected to forward an adapted version to enAlt.` +
+            (isBetaChannel
+                ? "\nℹ️ Reminder: Beta Info posts should be sent to enAlt with a #betainfo hashtag."
+                : "") +
+            (isAltChannel
                 ? " \n🛑 THE POST WAS NOT FORWARDED TO TRANSLATORS. SEND A NEW POST TO ALT CHANNEL THAT FITS THE REQUIREMENTS."
                 : "");
         await Promise.any([
           ctx.api.sendMessage(
             chatId,
             ru
-              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью. Не забудьте переслать его в ruAlt с картинкой через ссылку.` + 
-                (channel.flags?.includes("alt")
+              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью. Не забудьте переслать его в ruAlt с картинкой через ссылку.` +
+                (isBetaChannel
+                  ? "\nℹ️ Напоминание: посты Beta Info нужно отправлять в ruAlt с хэштегом #betainfo."
+                  : "") +
+                (isAltChannel
                   ? " \n🛑 ПОСТ НЕ ПЕРЕСЛАН ПЕРЕВОДЧИКАМ. ИСПРАВЬТЕ ПОСТ И ОТПРАВЬТЕ ЕГО В АЛЬТ КАНАЛ ЗАНОВО."
                   : "")
               : englishMessage,
