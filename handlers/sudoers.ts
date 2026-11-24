@@ -13,12 +13,22 @@ import {
   update,
   updateWithFileData,
 } from "../data.ts";
+import { resetQuota } from "../gcloud_translate.ts";
 
 const composer = new Composer<Context>();
 
 export default composer;
 
-const COMMANDS = ["import", "export", "add", "rm", "stats", "broadcast"];
+const COMMANDS = [
+  "import",
+  "export",
+  "add",
+  "rm",
+  "stats",
+  "broadcast",
+  "reset_limits",
+  "reset_limit",
+];
 
 const su = composer.branch(
   (ctx): ctx is typeof ctx & { from: NonNullable<(typeof ctx)["from"]> } =>
@@ -332,6 +342,48 @@ su.command("disable_supervisors", async (ctx) => {
   });
   log.info(`[${ctx.from?.id}] Disabled supervisors for ${id}.`);
   await ctx.reply(`Disabled supervisors for ${id}.`);
+});
+
+su.command(["reset_limits", "reset_limit"], async (ctx) => {
+  const arg = ctx.match.trim();
+  let userId: number | undefined;
+
+  if (arg) {
+    if (!/^[1-9]\d*$/.test(arg)) {
+      await ctx.reply("Invalid user ID.");
+      return;
+    }
+
+    const parsed = Number(arg);
+    if (!Number.isSafeInteger(parsed)) {
+      await ctx.reply("Invalid user ID.");
+      return;
+    }
+
+    userId = parsed;
+  } else if (
+    ctx.msg.reply_to_message && !ctx.msg.reply_to_message.forum_topic_created
+  ) {
+    userId = ctx.msg.reply_to_message.from?.id;
+  }
+
+  if (!userId) {
+    await ctx.reply("Reply to a user or pass a user ID.");
+    return;
+  }
+
+  const hadUsage = resetQuota(userId);
+
+  log.info(
+    `[${ctx.from?.id}] Reset translation usage limits for ${userId} (had usage: ${hadUsage}).`,
+  );
+
+  await ctx.reply(
+    hadUsage
+      ? `Reset translation usage limits for ${getUserLink(userId)}.`
+      : `No translation usage recorded for ${getUserLink(userId)}.`,
+    { parse_mode: "HTML" },
+  );
 });
 
 su.command("broadcast", async (ctx) => {

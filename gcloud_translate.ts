@@ -23,6 +23,13 @@ export interface GoogleCloudTranslationResult extends GoogleCloudTranslationPayl
 
 const gCloudTranslateUsage = new Map<string, number[]>();
 
+export function resetQuota(userId: number | string): boolean {
+    const key = String(userId);
+    const hadUsage = (gCloudTranslateUsage.get(key)?.length ?? 0) > 0;
+    gCloudTranslateUsage.delete(key);
+    return hadUsage;
+}
+
 export class CloudTranslationError extends Error {
     constructor(message: string, type: string, nextRequest: string) {
         super(message);
