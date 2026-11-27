@@ -7,6 +7,6 @@ export default cleanEnv(Deno.env.toObject(), {
   GOOGLE_APPLICATION_CREDENTIALS: str(),
   GCLOUD_TRANSLATION_PROJECT_ID: str(),
   GCLOUD_TRANSLATION_LOCATION: str(),
-  GHOST_URL: str(),
-  GHOST_ADMIN_API_KEY: str(),
+  GHOST_URL: str({ default: "" }),
+  GHOST_ADMIN_API_KEY: str({ default: "" }),
 });

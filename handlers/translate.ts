@@ -10,6 +10,7 @@ import {
 } from "../data.ts";
 import env from "../env.ts";
 import {
+  getGhostConfig,
   isSupportedGhostImageMimeType,
   resolveImageFileInfo,
   uploadImageToGhost,
@@ -139,6 +140,13 @@ composer
       ctx.channelPost.caption &&
       ctx.channelPost.caption.length > MAX_CAPTION_LENGTH
     ) {
+      const ghostConfig = getGhostConfig(env);
+      if (!ghostConfig) {
+        log.info(`Ignored ${postId}: caption too long.`);
+        await notifyPilotsLongCaption(ctx, channel, postId);
+        return;
+      }
+
       const uploadableImage = getUploadableImage(ctx.channelPost);
       if (!uploadableImage) {
         log.info(
@@ -170,10 +178,7 @@ composer
         });
 
         ghostImageUrl = await uploadImageToGhost(
-          {
-            url: env.GHOST_URL,
-            adminApiKey: env.GHOST_ADMIN_API_KEY,
-          },
+          ghostConfig,
           {
             data,
             filename,

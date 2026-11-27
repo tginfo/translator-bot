@@ -3,6 +3,18 @@ export interface GhostConfig {
   adminApiKey: string;
 }
 
+export function getGhostConfig(env: {
+  GHOST_URL?: string;
+  GHOST_ADMIN_API_KEY?: string;
+}): GhostConfig | undefined {
+  const url = env.GHOST_URL?.trim();
+  const adminApiKey = env.GHOST_ADMIN_API_KEY?.trim();
+  if (!url || !adminApiKey) {
+    return undefined;
+  }
+  return { url, adminApiKey };
+}
+
 export interface GhostImageUpload {
   data: Uint8Array;
   filename: string;

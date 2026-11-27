@@ -1,6 +1,7 @@
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import {
   createGhostAdminToken,
+  getGhostConfig,
   isSupportedGhostImageMimeType,
   resolveImageFileInfo,
   uploadImageToGhost,
@@ -189,4 +190,34 @@ Deno.test("isSupportedGhostImageMimeType filters supported image MIME types", ()
   assertEquals(isSupportedGhostImageMimeType("video/mp4"), false);
   assertEquals(isSupportedGhostImageMimeType("application/pdf"), false);
   assertEquals(isSupportedGhostImageMimeType(undefined), false);
+});
+
+Deno.test("getGhostConfig returns undefined unless both Ghost env vars are non-empty", () => {
+  assertEquals(getGhostConfig({}), undefined);
+  assertEquals(
+    getGhostConfig({ GHOST_URL: "", GHOST_ADMIN_API_KEY: "" }),
+    undefined,
+  );
+  assertEquals(
+    getGhostConfig({ GHOST_URL: "https://blog.example.com" }),
+    undefined,
+  );
+  assertEquals(
+    getGhostConfig({ GHOST_ADMIN_API_KEY: "id:0123456789abcdef" }),
+    undefined,
+  );
+  assertEquals(
+    getGhostConfig({ GHOST_URL: "   ", GHOST_ADMIN_API_KEY: "id:0123" }),
+    undefined,
+  );
+  assertEquals(
+    getGhostConfig({
+      GHOST_URL: " https://blog.example.com ",
+      GHOST_ADMIN_API_KEY: " id:0123456789abcdef ",
+    }),
+    {
+      url: "https://blog.example.com",
+      adminApiKey: "id:0123456789abcdef",
+    },
+  );
 });
