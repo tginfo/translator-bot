@@ -15,6 +15,25 @@ export interface Language {
 export type Supervisors = Record<string, number[] | undefined>;
 export type UserSettings = { cloudTranslateQuota?: number, cloudTranslateQuotaDuration?: number };
 
+export interface UploadedImageRecord {
+  url: string;
+  ref: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  telegramFileId: string;
+  telegramFileUniqueId?: string;
+  uploadedAt: string;
+  post: {
+    id: string;
+    chatId: number;
+    channelName: string;
+    messageId: number;
+    url: string;
+  };
+  forwardedMessages: Record<string, { chatId: number; messageId: number }>;
+}
+
 let paths = new Array<string>();
 
 for await (const entry of Deno.readDir("./")) {
@@ -50,6 +69,8 @@ export const supervisors: Supervisors = data.supervisors ?? [];
 
 export const userSettings: Record<string, UserSettings> = data.userSettings ?? {};
 
+export const uploadedImages: UploadedImageRecord[] = data.uploadedImages ?? [];
+
 export const support = -1001266712138;
 
 export const channels: Record<
@@ -74,32 +95,55 @@ export async function update(
     sudoers: Sudoer[],
     supervisors: Supervisors,
     userSettings: Record<string, UserSettings>,
+    uploadedImages: UploadedImageRecord[],
   ) => Promise<void> | void,
 ) {
-  const result = func(languages, sudoers, supervisors, userSettings);
+  const result = func(
+    languages,
+    sudoers,
+    supervisors,
+    userSettings,
+    uploadedImages,
+  );
 
   result instanceof Promise && (await result);
 
   await Deno.writeTextFile(
     `data-${Date.now()}.json`,
-    JSON.stringify({ languages, sudoers, supervisors, userSettings }),
+    JSON.stringify({
+      languages,
+      sudoers,
+      supervisors,
+      userSettings,
+      uploadedImages,
+    }),
   );
 }
 
 // deno-lint-ignore no-explicit-any
 export async function updateWithFileData(data: any) {
   if (typeof data.languages === "object" && Array.isArray(data.sudoers)) {
-    await update((languages, sudoers) => {
-      for (const k in data.languages) {
-        languages[k] = data.languages[k];
-      }
+    await update(
+      (languages, sudoers, _supervisors, _userSettings, uploadedImages) => {
+        for (const k in data.languages) {
+          languages[k] = data.languages[k];
+        }
 
-      sudoers.splice(0, sudoers.length);
+        sudoers.splice(0, sudoers.length);
 
-      for (const sudoer of data.sudoers) {
-        sudoers.push(sudoer);
-      }
-    });
+        for (const sudoer of data.sudoers) {
+          sudoers.push(sudoer);
+        }
+
+        if (Array.isArray(data.uploadedImages)) {
+          uploadedImages.splice(
+            0,
+            uploadedImages.length,
+            ...data.uploadedImages,
+          );
+        }
+      },
+    );
 
     return true;
   }
@@ -108,7 +152,15 @@ export async function updateWithFileData(data: any) {
 }
 
 export function dump() {
-  return new TextEncoder().encode(JSON.stringify({ languages, sudoers, supervisors }));
+  return new TextEncoder().encode(
+    JSON.stringify({
+      languages,
+      sudoers,
+      supervisors,
+      userSettings,
+      uploadedImages,
+    }),
+  );
 }
 
 export const INLINE_INVITE_LINK_NAME = "tgnftrnsltrbtnln";

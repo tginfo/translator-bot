@@ -35,7 +35,10 @@ composer.command(["fp", "fix_punctuation"], async (ctx) => {
           ctx.chat.id,
           message.message_id,
           text,
-          { entities: repliedMessage.entities },
+          {
+            entities: repliedMessage.entities,
+            link_preview_options: repliedMessage.link_preview_options,
+          },
         );
       } else {
         await ctx.api.editMessageCaption(ctx.chat.id, message.message_id, {

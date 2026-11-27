@@ -1,12 +1,100 @@
 import * as log from "@std/log";
-import { Composer, InlineKeyboard, Filter, Context } from "grammy/mod.ts";
-import { channels, copilotsChat, languages, pilotChats } from "../data.ts";
+import { Composer, Filter, InlineKeyboard } from "grammy/mod.ts";
+import {
+  channels,
+  copilotsChat,
+  languages,
+  pilotChats,
+  update,
+  UploadedImageRecord,
+} from "../data.ts";
 import env from "../env.ts";
-import { linkMessage } from "../utils.ts";
+import {
+  isSupportedGhostImageMimeType,
+  resolveImageFileInfo,
+  uploadImageToGhost,
+} from "../ghost.ts";
+import { Context, linkMessage } from "../utils.ts";
 
-const composer = new Composer();
+const MAX_CAPTION_LENGTH = 1024;
+
+const composer = new Composer<Context>();
 
 export default composer;
+
+type ChannelPostContext = Filter<
+  Context,
+  "channel_post:text" | "channel_post:caption"
+>;
+
+function getUploadableImage(channelPost: ChannelPostContext["channelPost"]): {
+  fileId: string;
+  fileUniqueId: string;
+  fileName?: string;
+  mimeType?: string;
+} | undefined {
+  if (channelPost.photo?.length) {
+    const largestPhoto = channelPost.photo[channelPost.photo.length - 1];
+    return {
+      fileId: largestPhoto.file_id,
+      fileUniqueId: largestPhoto.file_unique_id,
+    };
+  }
+
+  if (
+    channelPost.document &&
+    isSupportedGhostImageMimeType(channelPost.document.mime_type)
+  ) {
+    return {
+      fileId: channelPost.document.file_id,
+      fileUniqueId: channelPost.document.file_unique_id,
+      fileName: channelPost.document.file_name,
+      mimeType: channelPost.document.mime_type,
+    };
+  }
+
+  return undefined;
+}
+
+async function notifyPilotsLongCaption(
+  ctx: ChannelPostContext,
+  channel: { name: string; flags?: string[] },
+  postId: string,
+) {
+  try {
+    const ru = ctx.chat.id in channels.ru;
+    const chatId = pilotChats[ru ? "ru" : "en"];
+    const isBetaChannel = channel.flags?.includes("beta");
+    const isAltChannel = channel.flags?.includes("alt");
+    const englishMessage =
+      `🖼️⚠️ A post with a long caption was made in ${channel.name}. English editors are expected to forward an adapted version to enAlt.` +
+      (isBetaChannel
+        ? "\nℹ️ Reminder: Beta Info posts should be sent to enAlt with a #betainfo hashtag."
+        : "") +
+      (isAltChannel
+        ? " \n🛑 THE POST WAS NOT FORWARDED TO TRANSLATORS. SEND A NEW POST TO ALT CHANNEL THAT FITS THE REQUIREMENTS."
+        : "");
+    await Promise.any([
+      ctx.api.sendMessage(
+        chatId,
+        ru
+          ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью. Не забудьте переслать его в ruAlt с картинкой через ссылку.` +
+            (isBetaChannel
+              ? "\nℹ️ Напоминание: посты Beta Info нужно отправлять в ruAlt с хэштегом #betainfo."
+              : "") +
+            (isAltChannel
+              ? " \n🛑 ПОСТ НЕ ПЕРЕСЛАН ПЕРЕВОДЧИКАМ. ИСПРАВЬТЕ ПОСТ И ОТПРАВЬТЕ ЕГО В АЛЬТ КАНАЛ ЗАНОВО."
+              : "")
+          : englishMessage,
+      ),
+      ctx.api.sendMessage(env.NOTIFICATIONS_CHAT, englishMessage),
+      ctx.api.sendMessage(copilotsChat, englishMessage),
+    ]);
+    log.info(`Pilots were notified of ${postId}.`);
+  } catch (err) {
+    log.info(`Failed to notify pilots of ${postId}: ${err}`);
+  }
+}
 
 composer
   .on(["channel_post:text", "channel_post:caption"])
@@ -15,7 +103,7 @@ composer
       String(ctx.chat.id),
     )
   )
-  .use(async (ctx: Filter<Context, "channel_post:text" | "channel_post:caption">) => {
+  .use(async (ctx: ChannelPostContext) => {
     const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
     const isBeta = channel.flags?.includes("beta") ||
       (channel.flags?.includes("alt") &&
@@ -34,42 +122,79 @@ composer
       return;
     }
 
-    if (ctx.channelPost.caption && ctx.channelPost.caption.length > 1048) {
-      log.info(`Ignored ${postId}: caption too long.`);
-      try {
-        const ru = ctx.chat.id in channels.ru;
-        const chatId = pilotChats[ru ? "ru" : "en"];
-        const isBetaChannel = channel.flags?.includes("beta");
-        const isAltChannel = channel.flags?.includes("alt");
-        const englishMessage =
-            `🖼️⚠️ A post with a long caption was made in ${channel.name}. English editors are expected to forward an adapted version to enAlt.` +
-            (isBetaChannel
-                ? "\nℹ️ Reminder: Beta Info posts should be sent to enAlt with a #betainfo hashtag."
-                : "") +
-            (isAltChannel
-                ? " \n🛑 THE POST WAS NOT FORWARDED TO TRANSLATORS. SEND A NEW POST TO ALT CHANNEL THAT FITS THE REQUIREMENTS."
-                : "");
-        await Promise.any([
-          ctx.api.sendMessage(
-            chatId,
-            ru
-              ? `🖼️⚠️ В ${channel.name} появилось сообщение с длинной надписью. Не забудьте переслать его в ruAlt с картинкой через ссылку.` +
-                (isBetaChannel
-                  ? "\nℹ️ Напоминание: посты Beta Info нужно отправлять в ruAlt с хэштегом #betainfo."
-                  : "") +
-                (isAltChannel
-                  ? " \n🛑 ПОСТ НЕ ПЕРЕСЛАН ПЕРЕВОДЧИКАМ. ИСПРАВЬТЕ ПОСТ И ОТПРАВЬТЕ ЕГО В АЛЬТ КАНАЛ ЗАНОВО."
-                  : "")
-              : englishMessage,
-          ),
-          ctx.api.sendMessage(env.NOTIFICATIONS_CHAT, englishMessage),
-          ctx.api.sendMessage(copilotsChat, englishMessage),
-        ]);
-        log.info(`Pilots were notified of ${postId}.`);
-      } catch (err) {
-        log.info(`Failed to notify pilots of ${postId}: ${err}`);
+    let ghostImageUrl: string | undefined;
+    let uploadedImageRecord: UploadedImageRecord | undefined;
+
+    if (
+      ctx.channelPost.caption &&
+      ctx.channelPost.caption.length > MAX_CAPTION_LENGTH
+    ) {
+      const uploadableImage = getUploadableImage(ctx.channelPost);
+      if (!uploadableImage) {
+        log.info(
+          `Ignored ${postId}: caption too long and media is not a supported image.`,
+        );
+        await notifyPilotsLongCaption(ctx, channel, postId);
+        return;
       }
-      return;
+
+      log.info(
+        `Post ${postId} has a long caption (${ctx.channelPost.caption.length} chars); uploading image to Ghost...`,
+      );
+      try {
+        const file = await ctx.api.getFile(uploadableImage.fileId);
+        const response = await fetch(file.getUrl());
+        if (!response.ok) {
+          throw new Error(
+            `Failed to download image from Telegram (${response.status} ${response.statusText}).`,
+          );
+        }
+
+        const data = new Uint8Array(await response.arrayBuffer());
+        const { filename, mimeType } = resolveImageFileInfo({
+          filePath: file.file_path,
+          fileName: uploadableImage.fileName,
+          mimeType: uploadableImage.mimeType,
+          responseContentType: response.headers.get("content-type"),
+          fallbackBaseName: postId,
+        });
+
+        ghostImageUrl = await uploadImageToGhost(
+          {
+            url: env.GHOST_URL,
+            adminApiKey: env.GHOST_ADMIN_API_KEY,
+          },
+          {
+            data,
+            filename,
+            mimeType,
+            ref: postId,
+          },
+        );
+        uploadedImageRecord = {
+          url: ghostImageUrl,
+          ref: postId,
+          filename,
+          mimeType,
+          size: data.byteLength,
+          telegramFileId: uploadableImage.fileId,
+          telegramFileUniqueId: uploadableImage.fileUniqueId,
+          uploadedAt: new Date().toISOString(),
+          post: {
+            id: postId,
+            chatId: ctx.chat.id,
+            channelName: channel.name,
+            messageId: ctx.channelPost.message_id,
+            url: linkMessage(ctx.chat.id, ctx.channelPost.message_id),
+          },
+          forwardedMessages: {},
+        };
+        log.info(`Uploaded image for ${postId} to Ghost: ${ghostImageUrl}`);
+      } catch (err) {
+        log.error(`Failed to upload image for ${postId} to Ghost: ${err}`);
+        await notifyPilotsLongCaption(ctx, channel, postId);
+        return;
+      }
     }
 
     const ru = ctx.chat.id in channels.ru;
@@ -161,9 +286,31 @@ composer
           .row()
           .text("Idle", "idle");
 
-        await ctx.copyMessage(language.edit, {
-          reply_markup,
-        });
+        if (ghostImageUrl) {
+          const sent = await ctx.api.sendMessage(
+            language.edit,
+            ctx.channelPost.caption!,
+            {
+              entities: ctx.channelPost.caption_entities,
+              link_preview_options: {
+                url: ghostImageUrl,
+                show_above_text: true,
+                prefer_large_media: true,
+              },
+              reply_markup,
+            },
+          );
+          if (uploadedImageRecord) {
+            uploadedImageRecord.forwardedMessages[id] = {
+              chatId: language.edit,
+              messageId: sent.message_id,
+            };
+          }
+        } else {
+          await ctx.copyMessage(language.edit, {
+            reply_markup,
+          });
+        }
 
         log.info(`Copied ${postId} to ${id} middle.`);
 
@@ -172,6 +319,28 @@ composer
         log.error(`Failed to copy ${postId} to ${id} middle: ${err}`);
 
         f++;
+      }
+    }
+
+    if (uploadedImageRecord) {
+      const record = uploadedImageRecord;
+      try {
+        await update(
+          (
+            _languages,
+            _sudoers,
+            _supervisors,
+            _userSettings,
+            uploadedImages,
+          ) => {
+            uploadedImages.push(record);
+          },
+        );
+        log.info(`Saved uploaded image record for ${postId} to database.`);
+      } catch (err) {
+        log.error(
+          `Failed to save uploaded image record for ${postId} to database: ${err}`,
+        );
       }
     }
 

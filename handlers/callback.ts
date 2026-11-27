@@ -86,7 +86,10 @@ cq.callbackQuery("translate", async (ctx) => {
       };
 
       if (ctx.callbackQuery.message.text != undefined) {
-        await ctx.editMessageText(translation, other);
+        await ctx.editMessageText(translation, {
+          ...other,
+          link_preview_options: ctx.callbackQuery.message.link_preview_options,
+        });
       } else {
         await ctx.editMessageCaption({ caption: translation, ...other });
       }
@@ -186,7 +189,21 @@ cq.callbackQuery(/^send/, async (ctx) => {
   let message;
 
   try {
-    message = await ctx.copyMessage(chatId);
+    if (
+      ctx.callbackQuery.message.text !== undefined &&
+      ctx.callbackQuery.message.link_preview_options
+    ) {
+      message = await ctx.api.sendMessage(
+        chatId,
+        ctx.callbackQuery.message.text,
+        {
+          entities: ctx.callbackQuery.message.entities,
+          link_preview_options: ctx.callbackQuery.message.link_preview_options,
+        },
+      );
+    } else {
+      message = await ctx.copyMessage(chatId);
+    }
     log.info(
       `[${ctx.from.id}] Sending to ${destination} successful in ${language.id} middle.`,
     );
@@ -231,7 +248,10 @@ cq.callbackQuery(/^edit/, async (ctx) => {
         chatId,
         messageId,
         ctx.callbackQuery.message.text,
-        { entities: ctx.callbackQuery.message.entities },
+        {
+          entities: ctx.callbackQuery.message.entities,
+          link_preview_options: ctx.callbackQuery.message.link_preview_options,
+        },
       );
     } else {
       await ctx.api.editMessageCaption(chatId, messageId, {
@@ -277,7 +297,10 @@ cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
     };
 
     if (ctx.callbackQuery.message.text != undefined) {
-      await ctx.editMessageText(newText, other);
+      await ctx.editMessageText(newText, {
+        ...other,
+        link_preview_options: ctx.callbackQuery.message.link_preview_options,
+      });
     } else {
       await ctx.editMessageCaption({ caption: newText, ...other });
     }
