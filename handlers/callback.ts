@@ -1,8 +1,13 @@
 import * as log from "@std/log";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
 import type { InlineKeyboardMarkup, Message } from "grammy/types.ts";
+import { trackedPosts, update } from "../data.ts";
 import { removeRepeatedSpacesInTextAndEntities } from "../entities_html.ts";
 import { truncateText } from "../html_common.ts";
+import {
+  findTrackedMiddleMessage,
+  markMiddleMessageTouched,
+} from "../middle_posts.ts";
 import {
   plainTextToRichMessages,
   removeRepeatedSpacesInRichMessage,
@@ -31,6 +36,25 @@ const gtr = new TelegramGTR();
 
 function truncateAlert(text: string): string {
   return truncateText(text, MAX_ALERT_LENGTH);
+}
+
+async function markTouched(chatId: number, messageId: number): Promise<void> {
+  const existing = findTrackedMiddleMessage(trackedPosts, chatId, messageId);
+  if (!existing || existing.middleMessage.touched) {
+    return;
+  }
+  try {
+    await update((_l, _s, _sup, _us, _ui, posts) => {
+      markMiddleMessageTouched(posts, chatId, messageId);
+    });
+    log.info(
+      `Marked middle message ${messageId} in ${existing.langId} middle as touched.`,
+    );
+  } catch (err) {
+    log.warning(
+      `Failed to persist touched state for middle message ${messageId} in ${existing.langId} middle: ${err}`,
+    );
+  }
 }
 
 const cq = composer.on("callback_query").filter(
@@ -119,6 +143,7 @@ cq.callbackQuery("translate", async (ctx) => {
       }
 
       if (!failed) {
+        await markTouched(ctx.chat.id, message.message_id);
         await ctx.replyWithRichMessage(toInputRichMessage(richMessage), {
           reply_parameters: { message_id: message.message_id },
           reply_markup: new InlineKeyboard().text("Delete", "delete"),
@@ -134,6 +159,7 @@ cq.callbackQuery("translate", async (ctx) => {
         await ctx.editMessageReplyMarkup({
           reply_markup: fallbackMarkup,
         });
+        await markTouched(ctx.chat.id, message.message_id);
       }
     } catch (err) {
       if (!alreadyAnswered) {
@@ -230,6 +256,7 @@ cq.callbackQuery("translate", async (ctx) => {
     }
 
     if (!failed) {
+      await markTouched(ctx.chat.id, message.message_id);
       await ctx.reply(text, {
         entities,
         reply_parameters: { message_id: message.message_id },
@@ -246,6 +273,7 @@ cq.callbackQuery("translate", async (ctx) => {
       await ctx.editMessageReplyMarkup({
         reply_markup: fallbackMarkup,
       });
+      await markTouched(ctx.chat.id, message.message_id);
     }
   } catch (err) {
     if (!alreadyAnswered) {
@@ -349,6 +377,7 @@ cq.callbackQuery("alt-translate", async (ctx) => {
     await ctx.editMessageReplyMarkup({
       reply_markup: updatedMarkup,
     });
+    await markTouched(ctx.chat.id, message.message_id);
   } catch (err) {
     await answerError(ctx, err);
   }
@@ -413,6 +442,8 @@ cq.callbackQuery(/^send/, async (ctx) => {
     return;
   }
 
+  await markTouched(ctx.chat.id, srcMessage.message_id);
+
   removeButton(srcMessage.reply_markup, "translate");
   removeButton(srcMessage.reply_markup, "alt-translate");
 
@@ -469,6 +500,7 @@ cq.callbackQuery(/^edit/, async (ctx) => {
     log.info(
       `[${ctx.from.id}] Editing post of ${destination} successful in ${language.id} middle.`,
     );
+    await markTouched(ctx.chat.id, message.message_id);
   } catch (err) {
     await answerError(ctx, err);
     log.warning(
@@ -504,6 +536,7 @@ cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
           reply_markup: message.reply_markup,
         });
       }
+      await markTouched(ctx.chat.id, message.message_id);
       return;
     }
 
@@ -534,6 +567,7 @@ cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
         reply_markup: message.reply_markup,
       });
     }
+    await markTouched(ctx.chat.id, message.message_id);
   } catch (err) {
     await answerError(ctx, err);
   }
@@ -553,6 +587,7 @@ cq.callbackQuery(/^idle/, async (ctx) => {
     await ctx.editMessageReplyMarkup({
       reply_markup: ctx.callbackQuery.message.reply_markup,
     });
+    await markTouched(ctx.chat.id, ctx.callbackQuery.message.message_id);
     return;
   }
 
@@ -566,4 +601,5 @@ cq.callbackQuery(/^idle/, async (ctx) => {
   await ctx.editMessageReplyMarkup({
     reply_markup: ctx.callbackQuery.message.reply_markup,
   });
+  await markTouched(ctx.chat.id, ctx.callbackQuery.message.message_id);
 });

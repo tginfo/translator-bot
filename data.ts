@@ -1,3 +1,5 @@
+import type { TrackedPost } from "./middle_posts.ts";
+
 type Sudoer = number;
 
 export interface Language {
@@ -71,6 +73,8 @@ export const userSettings: Record<string, UserSettings> = data.userSettings ?? {
 
 export const uploadedImages: UploadedImageRecord[] = data.uploadedImages ?? [];
 
+export const trackedPosts: Record<string, TrackedPost> = data.trackedPosts ?? {};
+
 export const support = -1001266712138;
 
 export const channels: Record<
@@ -96,6 +100,7 @@ export async function update(
     supervisors: Supervisors,
     userSettings: Record<string, UserSettings>,
     uploadedImages: UploadedImageRecord[],
+    trackedPosts: Record<string, TrackedPost>,
   ) => Promise<void> | void,
 ) {
   const result = func(
@@ -104,6 +109,7 @@ export async function update(
     supervisors,
     userSettings,
     uploadedImages,
+    trackedPosts,
   );
 
   result instanceof Promise && (await result);
@@ -116,6 +122,7 @@ export async function update(
       supervisors,
       userSettings,
       uploadedImages,
+      trackedPosts,
     }),
   );
 }
@@ -124,7 +131,14 @@ export async function update(
 export async function updateWithFileData(data: any) {
   if (typeof data.languages === "object" && Array.isArray(data.sudoers)) {
     await update(
-      (languages, sudoers, _supervisors, _userSettings, uploadedImages) => {
+      (
+        languages,
+        sudoers,
+        _supervisors,
+        _userSettings,
+        uploadedImages,
+        trackedPosts,
+      ) => {
         for (const k in data.languages) {
           languages[k] = data.languages[k];
         }
@@ -141,6 +155,19 @@ export async function updateWithFileData(data: any) {
             uploadedImages.length,
             ...data.uploadedImages,
           );
+        }
+
+        if (
+          data.trackedPosts &&
+          typeof data.trackedPosts === "object" &&
+          !Array.isArray(data.trackedPosts)
+        ) {
+          for (const key of Object.keys(trackedPosts)) {
+            delete trackedPosts[key];
+          }
+          for (const [key, value] of Object.entries(data.trackedPosts)) {
+            trackedPosts[key] = value as TrackedPost;
+          }
         }
       },
     );
@@ -159,6 +186,7 @@ export function dump() {
       supervisors,
       userSettings,
       uploadedImages,
+      trackedPosts,
     }),
   );
 }
