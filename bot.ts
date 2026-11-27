@@ -9,8 +9,10 @@ const bot = new Bot<Context>(env.BOT_TOKEN);
 
 bot.catch(({ error }) => {
 	console.trace(error);
-	console.log(error?.stack);
-	console.log(error?.cause);
+	if (error instanceof Error) {
+		console.log(error.stack);
+		console.log(error.cause);
+	}
 });
 
 bot.api.config.use(hydrateFiles(bot.token));

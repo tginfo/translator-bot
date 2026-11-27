@@ -9,10 +9,12 @@
     "@std/log": "jsr:@std/log@0.213.0",
     "envalid/": "https://deno.land/x/envalid@0.1.2/",
     "google-gax": "npm:google-gax@^6.17.0",
-    "grammy/": "https://deno.land/x/grammy@v1.20.3/",
+    "grammy/mod.ts": "npm:grammy@1.48.0",
+    "grammy/types.ts": "npm:grammy@1.48.0/types",
     "grammy_files": "npm:@grammyjs/files@1.2.0",
-    "grammy_parse_mode/": "https://deno.land/x/grammy_parse_mode@1.9.0/",
+    "grammy_parse_mode/mod.ts": "npm:@grammyjs/parse-mode@2.3.0",
     "gtr/": "https://deno.land/x/gtr@v0.0.1/",
+    "parse5": "npm:parse5@^8.0.0",
     "smartypants": "https://esm.sh/smartypants@0.2.2"
   }
 }

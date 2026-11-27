@@ -1,5 +1,14 @@
 import * as log from "@std/log";
 import { Composer, InlineKeyboard } from "grammy/mod.ts";
+import type { InlineKeyboardMarkup, Message } from "grammy/types.ts";
+import { removeRepeatedSpacesInTextAndEntities } from "../entities_html.ts";
+import { truncateText } from "../html_common.ts";
+import {
+  plainTextToRichMessages,
+  removeRepeatedSpacesInRichMessage,
+  richMessageToPlainText,
+  toInputRichMessage,
+} from "../rich_message.ts";
 import { TelegramGTR } from "../telegram_gtr.ts";
 import {
   answer,
@@ -9,14 +18,20 @@ import {
   hasButton,
   removeButton,
   replaceButton,
-  unparse,
 } from "../utils.ts";
+
+const MAX_TEXT_MESSAGE_LENGTH = 4096;
+const MAX_ALERT_LENGTH = 200;
 
 const composer = new Composer<Context>();
 
 export default composer;
 
 const gtr = new TelegramGTR();
+
+function truncateAlert(text: string): string {
+  return truncateText(text, MAX_ALERT_LENGTH);
+}
 
 const cq = composer.on("callback_query").filter(
   (
@@ -26,10 +41,8 @@ const cq = composer.on("callback_query").filter(
     from: NonNullable<typeof ctx["from"]>;
     callbackQuery: NonNullable<
       typeof ctx["callbackQuery"] & {
-        message: NonNullable<typeof ctx["callbackQuery"]["message"]> & {
-          reply_markup: NonNullable<
-            NonNullable<typeof ctx["callbackQuery"]["message"]>["reply_markup"]
-          >;
+        message: Message & {
+          reply_markup: InlineKeyboardMarkup;
         };
       }
     >;
@@ -37,17 +50,113 @@ const cq = composer.on("callback_query").filter(
     !!ctx.chat &&
     !!ctx.from &&
     !!ctx.callbackQuery.message &&
+    "reply_markup" in ctx.callbackQuery.message &&
     !!ctx.callbackQuery.message.reply_markup,
 );
 
 cq.callbackQuery("translate", async (ctx) => {
   const language = await findLanguage(ctx);
-  const text = ctx.callbackQuery.message.text ||
-    ctx.callbackQuery.message.caption!;
-  const entities = ctx.callbackQuery.message.entities ||
-    ctx.callbackQuery.message.caption_entities;
+  const message = ctx.callbackQuery.message;
+
+  if (message.rich_message) {
+    const richMessage = message.rich_message;
+    let translatedRichMessage;
+
+    try {
+      translatedRichMessage = await gtr.translateRichMessage(richMessage, {
+        targetLang: language.targetLang ?? language.id,
+        requestUser: language,
+      });
+
+      log.info(
+        `[${ctx.from.id}] Request to Google Translate successful for rich message in ${language.id} middle.`,
+      );
+    } catch (err) {
+      log.warning(
+        `[${ctx.from.id}] Request to Google Translate unsuccessful for rich message in ${language.id} middle: ${err}`,
+      );
+      await answer(
+        ctx,
+        truncateAlert(`An error occurred while translating.\n\n${err}`),
+      );
+      return;
+    }
+
+    const translatedMarkup = structuredClone(message.reply_markup);
+    replaceButton(
+      translatedMarkup,
+      ctx.callbackQuery.data,
+      "Remove Repeated Spaces",
+      "remove_repeated_spaces",
+    );
+
+    let alreadyAnswered = false;
+    try {
+      let failed = false;
+
+      try {
+        await ctx.editMessageText(translatedRichMessage, {
+          reply_markup: translatedMarkup,
+        });
+      } catch (err) {
+        failed = true;
+
+        log.warning(
+          `[${ctx.from.id}] Could not send rich message translation with formatting in ${language.id} middle: ${err}`,
+        );
+
+        try {
+          await answer(
+            ctx,
+            "Could not send the translation with formatting. Use the alternative button to get the translation without formatting.",
+          );
+        } catch (answerErr) {
+          log.warning(
+            `[${ctx.from.id}] Could not answer callback query after rich message formatting failure in ${language.id} middle: ${answerErr}`,
+          );
+        }
+        alreadyAnswered = true;
+      }
+
+      if (!failed) {
+        await ctx.replyWithRichMessage(toInputRichMessage(richMessage), {
+          reply_parameters: { message_id: message.message_id },
+          reply_markup: new InlineKeyboard().text("Delete", "delete"),
+        });
+      } else {
+        const fallbackMarkup = structuredClone(message.reply_markup);
+        replaceButton(
+          fallbackMarkup,
+          ctx.callbackQuery.data,
+          "Translate (Alt)",
+          "alt-translate",
+        );
+        await ctx.editMessageReplyMarkup({
+          reply_markup: fallbackMarkup,
+        });
+      }
+    } catch (err) {
+      if (!alreadyAnswered) {
+        await answerError(ctx, err);
+      } else {
+        log.warning(
+          `[${ctx.from.id}] Post-translation fallback update failed in ${language.id} middle: ${err}`,
+        );
+      }
+    }
+
+    return;
+  }
+
+  const text = message.text ?? message.caption;
+  if (!text) {
+    await answer(ctx, "Nothing to translate.");
+    return;
+  }
+  const entities = message.entities ?? message.caption_entities;
 
   let translation;
+  let translatedEntities;
 
   try {
     const result = await gtr.translate(text, {
@@ -58,111 +167,187 @@ cq.callbackQuery("translate", async (ctx) => {
     });
 
     translation = result.trans;
+    translatedEntities = result.entities;
 
     log.info(
       `[${ctx.from.id}] Request to Google Translate successful for ${language.id} middle.`,
     );
   } catch (err) {
-    translation = `An error occurred while translating.\n\n${err}`;
     log.warning(
       `[${ctx.from.id}] Request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
     );
+    await answer(
+      ctx,
+      truncateAlert(`An error occurred while translating.\n\n${err}`),
+    );
+    return;
   }
 
+  const translatedMarkup = structuredClone(message.reply_markup);
   replaceButton(
-    ctx.callbackQuery.message.reply_markup,
+    translatedMarkup,
     ctx.callbackQuery.data,
     "Remove Repeated Spaces",
     "remove_repeated_spaces",
   );
 
+  let alreadyAnswered = false;
   try {
     let failed = false;
 
     try {
-      const other = {
-        parse_mode: "HTML" as const,
-        reply_markup: ctx.callbackQuery.message.reply_markup,
-      };
-
-      if (ctx.callbackQuery.message.text != undefined) {
+      if (message.text != undefined) {
         await ctx.editMessageText(translation, {
-          ...other,
-          link_preview_options: ctx.callbackQuery.message.link_preview_options,
+          entities: translatedEntities,
+          link_preview_options: message.link_preview_options,
+          reply_markup: translatedMarkup,
         });
       } else {
-        await ctx.editMessageCaption({ caption: translation, ...other });
+        await ctx.editMessageCaption({
+          caption: translation,
+          caption_entities: translatedEntities,
+          reply_markup: translatedMarkup,
+        });
       }
-    } catch (_err) {
+    } catch (err) {
       failed = true;
 
       log.warning(
-        `[${ctx.from.id}] Could not send translation with formatting in ${language.id} middle.`,
+        `[${ctx.from.id}] Could not send translation with formatting in ${language.id} middle: ${err}`,
       );
 
-      await answer(
-        ctx,
-        "Could not send the translation with formatting. Use the alternative button to get the translation without formatting.",
-      );
+      try {
+        await answer(
+          ctx,
+          "Could not send the translation with formatting. Use the alternative button to get the translation without formatting.",
+        );
+      } catch (answerErr) {
+        log.warning(
+          `[${ctx.from.id}] Could not answer callback query after formatting failure in ${language.id} middle: ${answerErr}`,
+        );
+      }
+      alreadyAnswered = true;
     }
 
     if (!failed) {
       await ctx.reply(text, {
         entities,
-        reply_to_message_id: ctx.callbackQuery.message.message_id,
+        reply_parameters: { message_id: message.message_id },
         reply_markup: new InlineKeyboard().text("Delete", "delete"),
       });
     } else {
+      const fallbackMarkup = structuredClone(message.reply_markup);
+      replaceButton(
+        fallbackMarkup,
+        ctx.callbackQuery.data,
+        "Translate (Alt)",
+        "alt-translate",
+      );
       await ctx.editMessageReplyMarkup({
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "Translate (Alt)", callback_data: "alt-translate" }],
-            ...ctx.callbackQuery.message.reply_markup.inline_keyboard,
-          ],
-        },
+        reply_markup: fallbackMarkup,
       });
     }
   } catch (err) {
-    await answerError(ctx, err);
+    if (!alreadyAnswered) {
+      await answerError(ctx, err);
+    } else {
+      log.warning(
+        `[${ctx.from.id}] Post-translation fallback update failed in ${language.id} middle: ${err}`,
+      );
+    }
   }
 });
 
 cq.callbackQuery("alt-translate", async (ctx) => {
   const language = await findLanguage(ctx);
-  const text = ctx.callbackQuery.message.text ||
-    ctx.callbackQuery.message.caption!;
+  const message = ctx.callbackQuery.message;
 
   let translation;
 
-  try {
-    const result = await gtr.translate(text, {
-      targetLang: language.targetLang ?? language.id,
-      // sourceLang: language.from,
-      requestUser: language,
-    });
+  if (message.rich_message) {
+    const plainText = richMessageToPlainText(message.rich_message);
+    if (!plainText.trim()) {
+      await answer(ctx, "Nothing to translate.");
+      return;
+    }
 
-    translation = result.trans;
+    try {
+      const result = await gtr.translatePlainText(plainText, {
+        targetLang: language.targetLang ?? language.id,
+        requestUser: language,
+      });
 
-    log.info(
-      `[${ctx.from.id}] Alternative request to Google Translate successful for ${language.id} middle.`,
-    );
-  } catch (err) {
-    translation = `An error occurred while translating.\n\n${err}`;
-    log.warning(
-      `[${ctx.from.id}] Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
-    );
+      translation = result.trans;
+
+      log.info(
+        `[${ctx.from.id}] Alternative request to Google Translate successful for rich message in ${language.id} middle.`,
+      );
+    } catch (err) {
+      log.warning(
+        `[${ctx.from.id}] Alternative request to Google Translate unsuccessful for rich message in ${language.id} middle: ${err}`,
+      );
+      await answer(
+        ctx,
+        truncateAlert(`An error occurred while translating.\n\n${err}`),
+      );
+      return;
+    }
+  } else {
+    const text = message.text ?? message.caption;
+    if (!text || !text.trim()) {
+      await answer(ctx, "Nothing to translate.");
+      return;
+    }
+
+    try {
+      const result = await gtr.translatePlainText(text, {
+        targetLang: language.targetLang ?? language.id,
+        // sourceLang: language.from,
+        requestUser: language,
+      });
+
+      translation = result.trans;
+
+      log.info(
+        `[${ctx.from.id}] Alternative request to Google Translate successful for ${language.id} middle.`,
+      );
+    } catch (err) {
+      log.warning(
+        `[${ctx.from.id}] Alternative request to Google Translate unsuccessful for ${language.id} middle: ${err}`,
+      );
+      await answer(
+        ctx,
+        truncateAlert(`An error occurred while translating.\n\n${err}`),
+      );
+      return;
+    }
   }
 
-  removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
+  if (!translation.trim()) {
+    await answer(ctx, "Nothing to translate.");
+    return;
+  }
 
   try {
-    await ctx.editMessageReplyMarkup({
-      reply_markup: ctx.callbackQuery.message.reply_markup,
-    });
+    const deleteKeyboard = new InlineKeyboard().text("Delete", "delete");
+    if (translation.length > MAX_TEXT_MESSAGE_LENGTH) {
+      for (const richPart of plainTextToRichMessages(translation)) {
+        await ctx.replyWithRichMessage(richPart, {
+          reply_parameters: { message_id: message.message_id },
+          reply_markup: deleteKeyboard,
+        });
+      }
+    } else {
+      await ctx.reply(translation, {
+        reply_parameters: { message_id: message.message_id },
+        reply_markup: deleteKeyboard,
+      });
+    }
 
-    await ctx.reply(translation, {
-      reply_to_message_id: ctx.callbackQuery.message.message_id,
-      reply_markup: new InlineKeyboard().text("Delete", "delete"),
+    const updatedMarkup = structuredClone(message.reply_markup);
+    removeButton(updatedMarkup, ctx.callbackQuery.data);
+    await ctx.editMessageReplyMarkup({
+      reply_markup: updatedMarkup,
     });
   } catch (err) {
     await answerError(ctx, err);
@@ -176,8 +361,9 @@ cq.callbackQuery("delete", async (ctx) => {
 
 cq.callbackQuery(/^send/, async (ctx) => {
   const language = await findLanguage(ctx, true);
+  const srcMessage = ctx.callbackQuery.message;
 
-  if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
+  if (hasButton(srcMessage.reply_markup, "idle_")) {
     await answer(ctx, "Can't send idled post.");
     return;
   }
@@ -189,16 +375,28 @@ cq.callbackQuery(/^send/, async (ctx) => {
   let message;
 
   try {
-    if (
-      ctx.callbackQuery.message.text !== undefined &&
-      ctx.callbackQuery.message.link_preview_options
+    if (srcMessage.rich_message) {
+      try {
+        message = await ctx.copyMessage(chatId);
+      } catch (copyErr) {
+        log.warning(
+          `[${ctx.from.id}] copyMessage failed for rich message to ${destination} in ${language.id} middle, falling back to sendRichMessage: ${copyErr}`,
+        );
+        message = await ctx.api.sendRichMessage(
+          chatId,
+          toInputRichMessage(srcMessage.rich_message),
+        );
+      }
+    } else if (
+      srcMessage.text !== undefined &&
+      srcMessage.link_preview_options
     ) {
       message = await ctx.api.sendMessage(
         chatId,
-        ctx.callbackQuery.message.text,
+        srcMessage.text,
         {
-          entities: ctx.callbackQuery.message.entities,
-          link_preview_options: ctx.callbackQuery.message.link_preview_options,
+          entities: srcMessage.entities,
+          link_preview_options: srcMessage.link_preview_options,
         },
       );
     } else {
@@ -215,24 +413,26 @@ cq.callbackQuery(/^send/, async (ctx) => {
     return;
   }
 
-  removeButton(ctx.callbackQuery.message.reply_markup, "translate");
+  removeButton(srcMessage.reply_markup, "translate");
+  removeButton(srcMessage.reply_markup, "alt-translate");
 
   replaceButton(
-    ctx.callbackQuery.message.reply_markup,
+    srcMessage.reply_markup,
     ctx.callbackQuery.data,
     (c) => c.replace("Send to", "Edit in"),
     `edit_${isBeta ? "beta" : "tg"}_${message.message_id}`,
   );
 
   await ctx.editMessageReplyMarkup({
-    reply_markup: ctx.callbackQuery.message.reply_markup,
+    reply_markup: srcMessage.reply_markup,
   });
 });
 
 cq.callbackQuery(/^edit/, async (ctx) => {
   const language = await findLanguage(ctx, true);
+  const message = ctx.callbackQuery.message;
 
-  if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
+  if (hasButton(message.reply_markup, "idle_")) {
     await answer(ctx, "Can't edit idled post.");
     return;
   }
@@ -243,20 +443,26 @@ cq.callbackQuery(/^edit/, async (ctx) => {
   const destination = isBeta ? "beta" : "main";
 
   try {
-    if (ctx.callbackQuery.message.text) {
+    if (message.rich_message) {
       await ctx.api.editMessageText(
         chatId,
         messageId,
-        ctx.callbackQuery.message.text,
+        toInputRichMessage(message.rich_message),
+      );
+    } else if (message.text) {
+      await ctx.api.editMessageText(
+        chatId,
+        messageId,
+        message.text,
         {
-          entities: ctx.callbackQuery.message.entities,
-          link_preview_options: ctx.callbackQuery.message.link_preview_options,
+          entities: message.entities,
+          link_preview_options: message.link_preview_options,
         },
       );
     } else {
       await ctx.api.editMessageCaption(chatId, messageId, {
-        caption: ctx.callbackQuery.message.caption,
-        caption_entities: ctx.callbackQuery.message.caption_entities,
+        caption: message.caption,
+        caption_entities: message.caption_entities,
       });
     }
 
@@ -273,41 +479,63 @@ cq.callbackQuery(/^edit/, async (ctx) => {
 });
 
 cq.callbackQuery("remove_repeated_spaces", async (ctx) => {
-  if (hasButton(ctx.callbackQuery.message.reply_markup, "idle_")) {
+  await findLanguage(ctx);
+  const message = ctx.callbackQuery.message;
+
+  if (hasButton(message.reply_markup, "idle_")) {
     await answer(ctx, "Can't edit idled post.");
     return;
   }
 
-  const text = unparse(
-    ctx.callbackQuery.message.text ?? ctx.callbackQuery.message.caption ?? "",
-    ctx.callbackQuery.message.entities ??
-      ctx.callbackQuery.message.caption_entities ?? [],
-  ).replace(/<br>/g, "\n");
+  try {
+    if (message.rich_message) {
+      const { richMessage, changed } = removeRepeatedSpacesInRichMessage(
+        message.rich_message,
+      );
 
-  const newText = text
-    .replace(/ {2,}/g, " ")
-    .replace(/\n /g, "\n");
+      removeButton(message.reply_markup, ctx.callbackQuery.data);
 
-  removeButton(ctx.callbackQuery.message.reply_markup, ctx.callbackQuery.data);
-
-  if (newText != text) {
-    const other = {
-      parse_mode: "HTML" as const,
-      reply_markup: ctx.callbackQuery.message.reply_markup,
-    };
-
-    if (ctx.callbackQuery.message.text != undefined) {
-      await ctx.editMessageText(newText, {
-        ...other,
-        link_preview_options: ctx.callbackQuery.message.link_preview_options,
-      });
-    } else {
-      await ctx.editMessageCaption({ caption: newText, ...other });
+      if (changed) {
+        await ctx.editMessageText(richMessage, {
+          reply_markup: message.reply_markup,
+        });
+      } else {
+        await ctx.editMessageReplyMarkup({
+          reply_markup: message.reply_markup,
+        });
+      }
+      return;
     }
-  } else {
-    await ctx.editMessageReplyMarkup({
-      reply_markup: ctx.callbackQuery.message.reply_markup,
-    });
+
+    const { text: newText, entities: newEntities, changed } =
+      removeRepeatedSpacesInTextAndEntities(
+        message.text ?? message.caption ?? "",
+        message.entities ?? message.caption_entities ?? [],
+      );
+
+    removeButton(message.reply_markup, ctx.callbackQuery.data);
+
+    if (changed) {
+      if (message.text != undefined) {
+        await ctx.editMessageText(newText, {
+          entities: newEntities,
+          link_preview_options: message.link_preview_options,
+          reply_markup: message.reply_markup,
+        });
+      } else {
+        await ctx.editMessageCaption({
+          caption: newText,
+          caption_entities: newEntities,
+          reply_markup: message.reply_markup,
+        });
+      }
+    } else {
+      await ctx.editMessageReplyMarkup({
+        reply_markup: message.reply_markup,
+      });
+    }
+  } catch (err) {
+    await answerError(ctx, err);
   }
 });
 

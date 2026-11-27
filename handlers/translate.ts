@@ -14,6 +14,10 @@ import {
   resolveImageFileInfo,
   uploadImageToGhost,
 } from "../ghost.ts";
+import {
+  extractRichMessageHashtags,
+  toInputRichMessage,
+} from "../rich_message.ts";
 import { Context, linkMessage } from "../utils.ts";
 
 const MAX_CAPTION_LENGTH = 1024;
@@ -24,7 +28,7 @@ export default composer;
 
 type ChannelPostContext = Filter<
   Context,
-  "channel_post:text" | "channel_post:caption"
+  "channel_post:text" | "channel_post:caption" | "channel_post:rich_message"
 >;
 
 function getUploadableImage(channelPost: ChannelPostContext["channelPost"]): {
@@ -97,7 +101,11 @@ async function notifyPilotsLongCaption(
 }
 
 composer
-  .on(["channel_post:text", "channel_post:caption"])
+  .on([
+    "channel_post:text",
+    "channel_post:caption",
+    "channel_post:rich_message",
+  ])
   .filter((ctx) =>
     Object.keys(channels.ru).concat(Object.keys(channels.en)).includes(
       String(ctx.chat.id),
@@ -105,17 +113,19 @@ composer
   )
   .use(async (ctx: ChannelPostContext) => {
     const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
+    const hashtags = ctx.channelPost.rich_message
+      ? extractRichMessageHashtags(ctx.channelPost.rich_message)
+      : ctx.entities("hashtag").map((v) => v.text);
     const isBeta = channel.flags?.includes("beta") ||
       (channel.flags?.includes("alt") &&
-        ctx.entities("hashtag")
-          .some((v) => v.text == "#betainfo"));
+        hashtags.some((v) => v == "#betainfo"));
     const postId = `${ctx.channelPost.message_id}-${channel.name}`;
 
     log.info(`Received a post from the ${channel.name}.`);
 
     if (
-      ctx.entities("hashtag").some((v) =>
-        ["#ad", "#df", "#реклама", "#промо"].includes(v.text.toLowerCase())
+      hashtags.some((v) =>
+        ["#ad", "#df", "#реклама", "#промо"].includes(v.toLowerCase())
       )
     ) {
       log.info(`Ignored ${postId}.`);
@@ -305,6 +315,21 @@ composer
               chatId: language.edit,
               messageId: sent.message_id,
             };
+          }
+        } else if (ctx.channelPost.rich_message) {
+          try {
+            await ctx.copyMessage(language.edit, {
+              reply_markup,
+            });
+          } catch (copyErr) {
+            log.warning(
+              `copyMessage failed for rich post ${postId} to ${id} middle, falling back to sendRichMessage: ${copyErr}`,
+            );
+            await ctx.api.sendRichMessage(
+              language.edit,
+              toInputRichMessage(ctx.channelPost.rich_message),
+              { reply_markup },
+            );
           }
         } else {
           await ctx.copyMessage(language.edit, {

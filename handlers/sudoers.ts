@@ -478,19 +478,19 @@ su.inlineQuery(
         : p
           .fmt`Great! You can get started right away by joining the following chats:
 
-${p.bold("Middle channel")}
+${p.bold}Middle channel${p.bold}
 ${inviteLinks[0]}
 Here the bot sends the posts to be translated, you edit the messages there and press a button to get them posted.
 
 ${
           inviteLinks.length == 3
-            ? p.fmt`${p.bold("Local translators discussion group")}
+            ? p.fmt`${p.bold}Local translators discussion group${p.bold}
 ${inviteLinks[1]}
 This is your language-specific chat where you interact with other translators of your language. As soon as you will join the chat, we will grant you permissions to translate the posts.`
             : ""
         }
 
-${p.bold("All translators chat")}
+${p.bold}All translators chat${p.bold}
 ${inviteLinks[inviteLinks.length - 1]}
 In this chat you can ask for help, get answers to your questions from the tginfo crew and other volunteers. We may also make announcements there and post additional materials.`;
 

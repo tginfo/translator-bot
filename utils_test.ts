@@ -1,16 +1,11 @@
 import { assertEquals, assertNotEquals } from "@std/assert";
-import { MessageEntity } from "grammy/types.ts";
 import {
-  escape,
-  fixText,
-  fixTrans,
+  getUserLink,
   hasButton,
-  isZh,
   linkMessage,
   removeButton,
   replaceButton,
-  unparse,
-} from "./utils.ts";
+} from "./utils_helpers.ts";
 
 Deno.test("removeButton", () => {
   const replyMarkup = {
@@ -42,73 +37,8 @@ Deno.test("hasButton", () => {
   assertNotEquals(hasButton(replyMarkup, "x"), true);
 });
 
-Deno.test("escape", () => {
-  const escaped = escape('<a href="https://tginfo.me">Telegram Info</a>');
-
-  assertEquals(
-    escaped,
-    "&lt;a href=&quot;https://tginfo.me&quot;&gt;Telegram Info&lt;/a&gt;",
-  );
-});
-
-Deno.test("unparse", () => {
-  const text =
-    `Pavel Durov is the luckiest Russian ever according to this a>ticle.
-
-  — sendMessage and editMessageText are the most used Bot API methods.
-
-"Probably soon, but not today." — said Telegram on Twitter.
-
-This text is underlined and a spoiler!`;
-
-  const entities: MessageEntity[] = [
-    { type: "bold", offset: 0, length: 11 },
-    {
-      type: "text_link",
-      url: "http://telegra.ph/?fb_cli_id=%15%12",
-      offset: 54,
-      length: 12,
-    },
-    { type: "code", offset: 73, length: 11 },
-    { type: "code", offset: 89, length: 15 },
-    { type: "italic", offset: 141, length: 31 },
-    { type: "spoiler", offset: 202, length: 38 },
-    { type: "underline", offset: 202, length: 38 },
-  ];
-
-  const html = unparse(text, entities);
-
-  assertEquals(
-    html,
-    `<b>Pavel Durov</b> is the luckiest Russian ever according to <a href="http://telegra.ph/?fb_cli_id=%15%12">this a&gt;ticle</a>.
-
-  — <code>sendMessage</code> and <code>editMessageText</code> are the most used Bot API methods.
-
-<i>&quot;Probably soon, but not today.&quot;</i> — said Telegram on Twitter.
-
-<span class="tg-spoiler"><u>This text is underlined and a spoiler!</u></span>`,
-  );
-});
-
-Deno.test("fixTrans", () => {
-  const trans =
-    `< b>Lê em ji wan re gotin:< / b> < i >&quot; Ma hûn nizanîbû ku Telegramê zêdetir rêzê li bikarînerên xwe digire? < a href = "https://telegram.org" >Herin aniha dakişînin!< /a>&quot;</i >微信`;
-
-  const result = fixTrans(trans, true);
-  const expected =
-    `<b>Lê em ji wan re gotin:</b> <i>&quot; Ma hûn nizanîbû ku Telegramê zêdetir rêzê li bikarînerên xwe digire? <a href="https://telegram.org">Herin aniha dakişînin!</a>&quot;</i>Telegram`;
-
-  assertEquals(result, expected);
-});
-
-Deno.test("fixText", () => {
-  assertEquals(fixText("TelegRam", true), "WeChat");
-});
-
-Deno.test("isZh", () => {
-  assertEquals(isZh("zh"), true);
-  assertEquals(isZh("zh-CN"), true);
-  assertEquals(isZh("zh-HK"), true);
+Deno.test("getUserLink", () => {
+  assertEquals(getUserLink(12345), '<a href="tg://user?id=12345">12345</a>');
 });
 
 Deno.test("linkMessage", () => {

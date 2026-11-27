@@ -1,8 +1,15 @@
-
 import gax from "google-gax";
 import { TranslationServiceClient } from "@google-cloud/translate";
 import env from "./env.ts";
+import {
+  type BatchExecutor,
+  CloudTranslationError,
+  createQuotaTranslateSession,
+  resetQuota,
+} from "./gcloud_translate_helpers.ts";
 import { TranslatorInfo } from "./utils.ts";
+
+export { CloudTranslationError, resetQuota };
 
 const client = new TranslationServiceClient({ fallback: true }, gax.fallback);
 
@@ -10,101 +17,120 @@ const projectId = env.GCLOUD_TRANSLATION_PROJECT_ID;
 const location = env.GCLOUD_TRANSLATION_LOCATION;
 
 export interface GoogleCloudTranslationPayload {
-    content: string;
-    sourceLanguage?: string;
-    targetLanguage: string;
-    requestUser: TranslatorInfo;
+  content: string;
+  sourceLanguage?: string;
+  targetLanguage: string;
+  requestUser: TranslatorInfo;
+  mimeType?: "text/html" | "text/plain";
 }
 
-export interface GoogleCloudTranslationResult extends GoogleCloudTranslationPayload {
-    success: boolean;
-    statusMessage?: string;
+export interface GoogleCloudTranslationResult
+  extends GoogleCloudTranslationPayload {
+  success: boolean;
+  statusMessage?: string;
 }
 
-const gCloudTranslateUsage = new Map<string, number[]>();
-
-export function resetQuota(userId: number | string): boolean {
-    const key = String(userId);
-    const hadUsage = (gCloudTranslateUsage.get(key)?.length ?? 0) > 0;
-    gCloudTranslateUsage.delete(key);
-    return hadUsage;
+export interface GoogleCloudBatchTranslationPayload {
+  contents: string[];
+  sourceLanguage?: string;
+  targetLanguage: string;
+  requestUser: TranslatorInfo;
+  mimeType?: "text/html" | "text/plain";
 }
 
-export class CloudTranslationError extends Error {
-    constructor(message: string, type: string, nextRequest: string) {
-        super(message);
-        this.type = type;
-        this.nextRequest = nextRequest;
+export interface GoogleCloudBatchTranslationResult
+  extends GoogleCloudBatchTranslationPayload {
+  success: boolean;
+  statusMessage?: string;
+}
+
+async function executeTranslateBatch(
+  payload: GoogleCloudBatchTranslationPayload,
+  userQuotaKey: string,
+): Promise<GoogleCloudBatchTranslationResult> {
+  const [response] = await client.translateText({
+    parent: `projects/${projectId}/locations/${location}`,
+    contents: payload.contents,
+    mimeType: payload.mimeType ?? "text/html",
+    sourceLanguageCode: payload.sourceLanguage,
+    targetLanguageCode: payload.targetLanguage,
+    model:
+      `projects/${projectId}/locations/${location}/models/general/translation-llm`,
+    labels: { user: userQuotaKey },
+  });
+
+  const translations = response?.translations;
+  if (!translations || translations.length !== payload.contents.length) {
+    throw new Error("Unable to access translation result");
+  }
+
+  const translatedAll: string[] = [];
+  let detectedSourceLanguage: string | undefined;
+
+  for (const translation of translations) {
+    if (
+      translation.translatedText === undefined ||
+      translation.translatedText === null
+    ) {
+      throw new Error("Unable to access translation result");
     }
-    type: string;
-    nextRequest: string;
+    if (!detectedSourceLanguage && translation.detectedLanguageCode) {
+      detectedSourceLanguage = translation.detectedLanguageCode;
+    }
+    translatedAll.push(translation.translatedText);
+  }
+
+  return {
+    success: true,
+    contents: translatedAll,
+    sourceLanguage: detectedSourceLanguage ?? payload.sourceLanguage,
+    targetLanguage: payload.targetLanguage,
+    requestUser: payload.requestUser,
+    mimeType: payload.mimeType,
+  };
 }
 
-function reserveQuota(key: string, quota: number, durationMs: number): () => void {
-    const now = Date.now();
-    const cutoff = now - durationMs;
+export function createCloudTranslateSession(
+  requestUser: TranslatorInfo,
+  executor: BatchExecutor<TranslatorInfo> = executeTranslateBatch,
+) {
+  return createQuotaTranslateSession(requestUser, executor);
+}
 
-    const timestamps = (gCloudTranslateUsage.get(key) ?? []).filter((t) => t > cutoff);
-
-    if (timestamps.length >= quota) {
-        gCloudTranslateUsage.set(key, timestamps);
-        const nextReq = quota > 0
-            ? new Date(timestamps[timestamps.length - quota] + durationMs).toISOString()
-            : "NEVER";
-        throw new CloudTranslationError(
-            `User ${key} is over quota: ${timestamps.length} out of ${quota}. Next available request: ${nextReq}`,
-            "QUOTA",
-            nextReq,
-        );
-    }
-
-    timestamps.push(now);
-    gCloudTranslateUsage.set(key, timestamps);
-
-    return () => {
-        const arr = gCloudTranslateUsage.get(key);
-        const idx = arr?.indexOf(now) ?? -1;
-        if (arr && idx !== -1) arr.splice(idx, 1);
-    };
+export function gCloudTranslateBatch(
+  payload: GoogleCloudBatchTranslationPayload,
+): Promise<GoogleCloudBatchTranslationResult> {
+  const session = createCloudTranslateSession(payload.requestUser);
+  return session.translateBatch({
+    contents: payload.contents,
+    sourceLanguage: payload.sourceLanguage,
+    targetLanguage: payload.targetLanguage,
+    mimeType: payload.mimeType,
+  });
 }
 
 export async function gCloudTranslate(
-    payload: GoogleCloudTranslationPayload,
+  payload: GoogleCloudTranslationPayload,
 ): Promise<GoogleCloudTranslationResult> {
-    const userQuotaKey = String(payload.requestUser.userId);
-    const userQuota = payload.requestUser.userSettings.cloudTranslateQuota ?? 10;
-    const userQuotaDuration =
-        payload.requestUser.userSettings.cloudTranslateQuotaDuration ?? 1000 * 60 * 60 * 24;
+  const res = await gCloudTranslateBatch({
+    contents: [payload.content],
+    sourceLanguage: payload.sourceLanguage,
+    targetLanguage: payload.targetLanguage,
+    requestUser: payload.requestUser,
+    mimeType: payload.mimeType,
+  });
 
-    const refund = reserveQuota(userQuotaKey, userQuota, userQuotaDuration);
+  const result = res.contents[0];
+  if (result === undefined || result === null) {
+    throw new Error("Unable to access translation result");
+  }
 
-    const [response] = await client
-        .translateText({
-            parent: `projects/${projectId}/locations/${location}`,
-            contents: [payload.content],
-            mimeType: "text/html",
-            sourceLanguageCode: payload.sourceLanguage,
-            targetLanguageCode: payload.targetLanguage,
-            model: `projects/${projectId}/locations/${location}/models/general/translation-llm`,
-            labels: { user: userQuotaKey },
-        })
-        .catch((err) => {
-            refund();
-            throw err;
-        });
-
-    const translation = response?.translations?.[0];
-    const result = translation?.translatedText;
-
-    if (!result) {
-        throw new Error("Unable to access translation result");
-    }
-
-    return {
-        success: true,
-        content: result,
-        sourceLanguage: translation.detectedLanguageCode || undefined,
-        targetLanguage: payload.targetLanguage,
-        requestUser: payload.requestUser,
-    };
+  return {
+    success: true,
+    content: result,
+    sourceLanguage: res.sourceLanguage,
+    targetLanguage: payload.targetLanguage,
+    requestUser: payload.requestUser,
+    mimeType: payload.mimeType,
+  };
 }

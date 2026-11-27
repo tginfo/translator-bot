@@ -23,11 +23,9 @@ ecp.use((ctx, next) => {
 
 ecp.use(async (ctx) => {
   const channel = { ...channels.en, ...channels.ru }[ctx.chat.id];
-  const { text, entities } = p.fmt`${
-    p.link(
-      ctx.msg.message_id,
-      linkMessage(ctx.chat.id, ctx.msg.message_id),
-    )
+  const postUrl = linkMessage(ctx.chat.id, ctx.msg.message_id);
+  const { text, entities } = p.fmt`${p.link(postUrl)}${ctx.msg.message_id}${
+    p.link(postUrl)
   } was edited in ${channel.name}.`;
   try {
     await ctx.api.sendMessage(env.NOTIFICATIONS_CHAT, text, { entities });
