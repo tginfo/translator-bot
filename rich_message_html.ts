@@ -30,6 +30,7 @@ import {
   isBareUrlText,
   isElement,
   isTextNode,
+  normalizeTranslatedDomWhitespace,
   parseFiniteNumber,
   parseSafeInt,
   sanitizeDateTimeFormat,
@@ -39,10 +40,16 @@ export type RichHtmlMode = "telegram" | "translate";
 
 export interface HtmlToRichOptions {
   /**
-   * When true, strips single spaces/tabs that translation APIs commonly inject
-   * directly around `<br>` tags. Keep false for lossless Telegram HTML round-trips.
+   * When true, strips spurious horizontal spaces that translation APIs commonly
+   * inject around `<br>` tags and inside or around inline HTML tags (such as
+   * hyperlinks). Keep false for lossless Telegram HTML round-trips.
    */
   normalizeTranslatedWhitespace?: boolean;
+  /**
+   * Optional BCP-47 target language code used for language-aware punctuation
+   * whitespace rules.
+   */
+  targetLanguage?: string;
 }
 
 export interface RichHtmlContext {
@@ -1152,18 +1159,7 @@ function parseInlineNodes(
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
     if (isTextNode(node)) {
-      let val = node.value;
-      if (normalizeWs) {
-        // Strip single spurious spaces Google Translate may insert directly next to <br>.
-        const prev = nodes[i - 1];
-        const next = nodes[i + 1];
-        if (prev && isElement(prev) && prev.tagName.toLowerCase() === "br") {
-          val = val.replace(/^[ \t]/, "");
-        }
-        if (next && isElement(next) && next.tagName.toLowerCase() === "br") {
-          val = val.replace(/[ \t]+$/, "");
-        }
-      }
+      const val = node.value;
       if (val.length > 0) {
         flushInlineBreak(val);
         out.push(val);
@@ -2193,6 +2189,18 @@ export function htmlToInputRichBlocks(
   const ctx = context ?? createRichHtmlContext();
   const normalizeWs = options?.normalizeTranslatedWhitespace ?? false;
   const fragment = parseFragment(html);
+  if (normalizeWs) {
+    normalizeTranslatedDomWhitespace(fragment.childNodes, {
+      targetLanguage: options?.targetLanguage,
+      getPreservedText: (el) => {
+        const inlineId = getAttr(el, "data-tg-inline");
+        if (inlineId && ctx.preservedInline.has(inlineId)) {
+          return richTextToPlainTextInternal(ctx.preservedInline.get(inlineId)!);
+        }
+        return undefined;
+      },
+    });
+  }
   const refNames = new Set<string>(ctx.referenceNames);
   collectReferenceNames(fragment.childNodes, refNames);
   return parseBlockNodes(fragment.childNodes, ctx, refNames, normalizeWs);

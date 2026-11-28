@@ -11,6 +11,38 @@ const DATE_TIME_FORMAT_RE = /^(?:r|w?[dD]?[tT]?)$/;
 const OPENING_PUNCT_OR_SPACE_RE = /[\s(\[{<«“‘"'\u2013\u2014]/;
 const CLOSING_PUNCT_OR_SPACE_RE = /[\s)\]}»”’"']/;
 const SMARTYPANTS_ESCAPE_RE = /\\([\\"'`.-])/g;
+const CJK_CHAR_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+const WORD_CHAR_RE = /[\p{L}\p{N}]/u;
+const OPENING_NO_SPACE_AFTER_BASE_RE = /[(\[{（［｛【「『《〈〔〖“‘„‚]/;
+const OPENING_NO_SPACE_AFTER_NON_FR_RE = /[(\[{（［｛【「『《〈〔〖“‘„‚«‹]/;
+const CLOSING_NO_SPACE_BEFORE_BASE_RE =
+  /[,…)\]\}）］｝】」』》〉〕〗”’。，、；：！？]/;
+const CLOSING_NO_SPACE_BEFORE_NON_FR_RE =
+  /[,…;:!?)\]\}）］｝】」』》〉〕〗”’»›。，、；：！？]/;
+const HOIST_NO_SPACE_BEFORE_RE = /[/\\\-@#]$/;
+const HOIST_NO_SPACE_AFTER_RE = /^[/\\\-]/;
+const ENGLISH_APOSTROPHE_SUFFIX_RE =
+  /^'(?:s|re|ve|ll|d|m)(?=$|[\s.,;:!?)\]\}»”’"'])/i;
+const FRENCH_LANG_RE = /^fr(?:[-_]|$)/i;
+
+const BLOCK_CONTAINER_TAGS = new Set([
+  "p", "div", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6", "footer",
+  "aside", "figure", "figcaption", "cite", "caption", "table", "thead",
+  "tbody", "tfoot", "tr", "td", "th", "ul", "ol", "li", "details", "summary",
+  "section", "article", "hr", "pre", "tg-math-block", "tg-map", "tg-document",
+  "tg-collage", "tg-slideshow", "tg-button-row", "tg-thinking", "video",
+  "audio",
+]);
+
+const VERBATIM_TAGS = new Set([
+  "pre", "code", "tg-emoji", "tg-math", "tg-math-block", "tg-map",
+  "tg-document", "img", "video", "audio", "hr", "input",
+]);
+
+const HOISTABLE_INLINE_TAGS = new Set([
+  "a", "b", "strong", "i", "em", "u", "ins", "s", "strike", "del",
+  "tg-spoiler", "span", "tg-time", "sub", "sup", "mark", "tg-reference",
+]);
 
 export function isElement(node: ChildNode): node is Element {
   return "tagName" in node;
@@ -315,4 +347,369 @@ export function createPlainTextSmartypants(
       (match, idxStr) => saved[Number(idxStr)] ?? match,
     );
   };
+}
+
+export interface NormalizeTranslatedDomOptions {
+  targetLanguage?: string;
+  getPreservedText?: (el: Element) => string | undefined;
+}
+
+function isDomBlockElement(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (tag === "a") {
+    return (
+      hasAttr(el, "data-tg-block-anchor") ||
+      (hasAttr(el, "name") && !hasAttr(el, "href"))
+    );
+  }
+  if (tag === "img") {
+    return !(getAttr(el, "src") ?? "").startsWith("tg://emoji?");
+  }
+  return BLOCK_CONTAINER_TAGS.has(tag);
+}
+
+function isDomVerbatimElement(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (VERBATIM_TAGS.has(tag)) return true;
+  if (
+    hasAttr(el, "data-tg-leaf") ||
+    hasAttr(el, "data-tg-inline") ||
+    hasAttr(el, "data-tg-block")
+  ) {
+    return true;
+  }
+  const id = getAttr(el, "id") ?? "";
+  if (id.startsWith("tg-leaf-") || id.startsWith("tg-block-")) {
+    return true;
+  }
+  if ((getAttr(el, "translate") ?? "").toLowerCase() === "no") {
+    return true;
+  }
+  if (tag === "a" && hasAttr(el, "name") && !hasAttr(el, "href")) {
+    return true;
+  }
+  return false;
+}
+
+function isDomInlineElement(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (tag === "br" || tag === "input") return false;
+  return !isDomBlockElement(el);
+}
+
+function isDomHoistableInlineElement(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  return (
+    HOISTABLE_INLINE_TAGS.has(tag) &&
+    !isDomVerbatimElement(el) &&
+    !isDomBlockElement(el)
+  );
+}
+
+function createTextNode(value: string): TextNode {
+  return { nodeName: "#text", value, parentNode: null } as TextNode;
+}
+
+function getBoundaryChar(
+  node: ChildNode,
+  side: "first" | "last",
+  getPreservedText?: (el: Element) => string | undefined,
+): string {
+  if (isTextNode(node)) {
+    if (node.value.length === 0) return "";
+    return side === "first" ? node.value[0] : node.value[node.value.length - 1];
+  }
+  if (!isElement(node)) return "";
+  if (node.tagName.toLowerCase() === "br") return "\n";
+  const preserved = getPreservedText?.(node);
+  if (preserved !== undefined) {
+    if (preserved.length === 0) return "";
+    return side === "first" ? preserved[0] : preserved[preserved.length - 1];
+  }
+  const len = node.childNodes.length;
+  for (let i = 0; i < len; i++) {
+    const child = node.childNodes[side === "first" ? i : len - 1 - i];
+    const ch = getBoundaryChar(child, side, getPreservedText);
+    if (ch) return ch;
+  }
+  return "";
+}
+
+/**
+ * Normalizes spurious horizontal whitespace that translation APIs (such as
+ * Google Cloud Translation in `text/html` mode) commonly inject around `<br>`
+ * tags and inside or around inline HTML tags (especially `<a>` hyperlinks and
+ * `translate="no"` spans), while preserving verbatim/code elements and never
+ * gluing separate words together.
+ */
+export function normalizeTranslatedDomWhitespace(
+  nodes: ChildNode[],
+  options?: NormalizeTranslatedDomOptions,
+): void {
+  const isFrench = options?.targetLanguage !== undefined &&
+    FRENCH_LANG_RE.test(options.targetLanguage.trim());
+  const getPreservedText = options?.getPreservedText;
+  const openingNoSpaceRe = isFrench
+    ? OPENING_NO_SPACE_AFTER_BASE_RE
+    : OPENING_NO_SPACE_AFTER_NON_FR_RE;
+  const closingNoSpaceRe = isFrench
+    ? CLOSING_NO_SPACE_BEFORE_BASE_RE
+    : CLOSING_NO_SPACE_BEFORE_NON_FR_RE;
+
+  const isBreakOrBlock = (node: ChildNode | undefined): boolean =>
+    node !== undefined && isElement(node) &&
+    (node.tagName.toLowerCase() === "br" || isDomBlockElement(node));
+
+  const normalizeList = (
+    list: ChildNode[],
+    isBlockContainer: boolean,
+  ): { leadingWs: string; trailingWs: string } => {
+    // Pass 1: Strip spaces next to `<br>` on raw text nodes, recurse bottom-up,
+    // and hoist leading/trailing horizontal spaces out of hoistable inline tags
+    // so all boundary rules run in one unified pass.
+    const cleaned: ChildNode[] = [];
+    for (let i = 0; i < list.length; i++) {
+      const node = list[i];
+      if (!isTextNode(node)) {
+        cleaned.push(node);
+        continue;
+      }
+      let val = node.value;
+      const prev = list[i - 1];
+      const next = list[i + 1];
+      if (prev && isElement(prev) && prev.tagName.toLowerCase() === "br") {
+        val = val.replace(/^[ \t]/, "");
+      }
+      if (next && isElement(next) && next.tagName.toLowerCase() === "br") {
+        val = val.replace(/[ \t]+$/, "");
+      }
+      if (val.length > 0) {
+        cleaned.push(val === node.value ? node : createTextNode(val));
+      }
+    }
+
+    const expanded: ChildNode[] = [];
+    const appendNode = (node: ChildNode) => {
+      if (isTextNode(node)) {
+        if (node.value.length === 0) return;
+        const prev = expanded[expanded.length - 1];
+        if (prev && isTextNode(prev)) {
+          expanded[expanded.length - 1] = createTextNode(prev.value + node.value);
+        } else {
+          expanded.push(node);
+        }
+      } else {
+        expanded.push(node);
+      }
+    };
+
+    for (let i = 0; i < cleaned.length; i++) {
+      const node = cleaned[i];
+      if (!isElement(node) || isDomVerbatimElement(node)) {
+        appendNode(node);
+        continue;
+      }
+      const tag = node.tagName.toLowerCase();
+      if (tag === "br") {
+        appendNode(node);
+        continue;
+      }
+      if (!isDomHoistableInlineElement(node)) {
+        if (node.childNodes.length > 0) {
+          normalizeList(node.childNodes, true);
+        }
+        appendNode(node);
+        continue;
+      }
+
+      const hadChildren = node.childNodes.length > 0;
+      const { leadingWs, trailingWs } = normalizeList(node.childNodes, false);
+      const prevNode = expanded[expanded.length - 1];
+      const nextNode = cleaned[i + 1];
+
+      if (hadChildren && node.childNodes.length === 0) {
+        // Whitespace-only inline element: drop the empty tag and keep at most
+        // one space if it separated two non-space siblings.
+        if (
+          prevNode && nextNode &&
+          !isBreakOrBlock(prevNode) && !isBreakOrBlock(nextNode)
+        ) {
+          if (
+            isTextNode(prevNode) && isTextNode(nextNode) &&
+            /[ \t]$/.test(prevNode.value) && /^[ \t]/.test(nextNode.value)
+          ) {
+            cleaned[i + 1] = createTextNode(nextNode.value.replace(/^[ \t]+/, ""));
+          } else if (
+            !/\s/.test(getBoundaryChar(prevNode, "last", getPreservedText)) &&
+            !/\s/.test(getBoundaryChar(nextNode, "first", getPreservedText))
+          ) {
+            appendNode(createTextNode(" "));
+          }
+        }
+        continue;
+      }
+
+      const allowLeading = leadingWs.length > 0 && (
+        prevNode === undefined
+          ? !isBlockContainer
+          : (!isBreakOrBlock(prevNode) &&
+            !(isTextNode(prevNode) && HOIST_NO_SPACE_BEFORE_RE.test(prevNode.value)))
+      );
+      const allowTrailing = trailingWs.length > 0 && (
+        nextNode === undefined
+          ? !isBlockContainer
+          : (!isBreakOrBlock(nextNode) &&
+            !(isTextNode(nextNode) && HOIST_NO_SPACE_AFTER_RE.test(nextNode.value)))
+      );
+
+      if (allowLeading) appendNode(createTextNode(leadingWs));
+      appendNode(node);
+      if (allowTrailing) appendNode(createTextNode(trailingWs));
+    }
+
+    // For hoistable inline containers, lift edge horizontal spaces to parent
+    // before outer boundary normalization runs at the enclosing block level.
+    let leadingWs = "";
+    let trailingWs = "";
+    if (!isBlockContainer) {
+      const first = expanded[0];
+      if (first && isTextNode(first)) {
+        const m = first.value.match(/^[ \t]+/);
+        if (m) {
+          leadingWs = m[0];
+          const rest = first.value.slice(m[0].length);
+          if (rest.length === 0) expanded.shift();
+          else expanded[0] = createTextNode(rest);
+        }
+      }
+      const last = expanded[expanded.length - 1];
+      if (last && isTextNode(last)) {
+        const m = last.value.match(/[ \t]+$/);
+        if (m) {
+          trailingWs = m[0];
+          const rest = last.value.slice(0, last.value.length - m[0].length);
+          if (rest.length === 0) expanded.pop();
+          else expanded[expanded.length - 1] = createTextNode(rest);
+        }
+      }
+    }
+
+    // Pass 2: Normalize horizontal spaces directly adjacent to inline elements
+    // (covers both originally-outside spaces and spaces hoisted in Pass 1).
+    for (let i = 0; i < expanded.length; i++) {
+      const node = expanded[i];
+      if (!isTextNode(node)) continue;
+
+      let val = node.value;
+      const prev = expanded[i - 1];
+      const next = expanded[i + 1];
+      const prevIsInline = prev !== undefined && isElement(prev) &&
+        isDomInlineElement(prev);
+      const nextIsInline = next !== undefined && isElement(next) &&
+        isDomInlineElement(next);
+
+      if (
+        /^[ \t]+$/.test(val) && (
+          (isBlockContainer && ((i === 0 && nextIsInline) ||
+            (i === expanded.length - 1 && prevIsInline))) ||
+          (isBreakOrBlock(prev) && nextIsInline) ||
+          (prevIsInline && isBreakOrBlock(next))
+        )
+      ) {
+        val = "";
+      }
+
+      if (val.length > 0 && prevIsInline) {
+        if (nextIsInline && /^[ \t]{2,}$/.test(val)) {
+          val = " ";
+        } else {
+          val = val.replace(/^[ \t]{2,}(\S)/, " $1");
+        }
+
+        const leadingMatch = val.match(/^[ \t]+/);
+        if (leadingMatch) {
+          const afterWs = val.slice(leadingMatch[0].length);
+          const prevLast = getBoundaryChar(prev!, "last", getPreservedText);
+
+          if (afterWs.length === 0) {
+            const nextFirst = nextIsInline
+              ? getBoundaryChar(next!, "first", getPreservedText)
+              : "";
+            if (prevLast && nextFirst && CJK_CHAR_RE.test(prevLast) &&
+              CJK_CHAR_RE.test(nextFirst)) {
+              val = "";
+            }
+          } else {
+            const firstAfter = afterWs[0];
+            const charAfterFirst = afterWs.length > 1
+              ? afterWs[1]
+              : (next ? getBoundaryChar(next, "first", getPreservedText) : "");
+            const isClosingPeriod = firstAfter === "." &&
+              (!charAfterFirst || charAfterFirst === "." ||
+                !WORD_CHAR_RE.test(charAfterFirst));
+            const isClosingQuote = (firstAfter === '"' || firstAfter === "'") &&
+              (!charAfterFirst || charAfterFirst === "\n" ||
+                closingNoSpaceRe.test(charAfterFirst) ||
+                charAfterFirst === "." ||
+                (/[ \t]/.test(charAfterFirst) && expanded[i - 2] !== undefined &&
+                  getBoundaryChar(expanded[i - 2], "last", getPreservedText) ===
+                    firstAfter));
+
+            if (
+              (prevLast && CJK_CHAR_RE.test(prevLast) &&
+                CJK_CHAR_RE.test(firstAfter)) ||
+              closingNoSpaceRe.test(firstAfter) ||
+              isClosingPeriod ||
+              ENGLISH_APOSTROPHE_SUFFIX_RE.test(afterWs) ||
+              isClosingQuote
+            ) {
+              val = afterWs;
+            }
+          }
+        }
+      }
+
+      if (val.length > 0 && nextIsInline) {
+        val = val.replace(/(\S)[ \t]{2,}$/, "$1 ");
+
+        const trailingMatch = val.match(/[ \t]+$/);
+        if (trailingMatch) {
+          const beforeWs = val.slice(0, val.length - trailingMatch[0].length);
+          const lastBefore = beforeWs.length > 0
+            ? beforeWs[beforeWs.length - 1]
+            : "";
+          const nextFirst = getBoundaryChar(next!, "first", getPreservedText);
+          const charBeforeLast = beforeWs.length > 1
+            ? beforeWs[beforeWs.length - 2]
+            : (prev ? getBoundaryChar(prev, "last", getPreservedText) : "");
+          const isOpeningQuote = (lastBefore === '"' || lastBefore === "'") &&
+            (!charBeforeLast || /\s/.test(charBeforeLast) ||
+              openingNoSpaceRe.test(charBeforeLast));
+
+          if (
+            (lastBefore && nextFirst && CJK_CHAR_RE.test(lastBefore) &&
+              CJK_CHAR_RE.test(nextFirst)) ||
+            (lastBefore && openingNoSpaceRe.test(lastBefore)) ||
+            isOpeningQuote
+          ) {
+            val = beforeWs;
+          }
+        }
+      }
+
+      if (val !== node.value) {
+        expanded[i] = createTextNode(val);
+      }
+    }
+
+    list.length = 0;
+    for (const node of expanded) {
+      if (isTextNode(node) && node.value.length === 0) continue;
+      list.push(node);
+    }
+
+    return { leadingWs, trailingWs };
+  };
+
+  normalizeList(nodes, true);
 }

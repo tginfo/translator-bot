@@ -629,6 +629,7 @@ async function translateRichTextChunked(
   richText: RichText,
   translateHtmlDocuments: (htmlDocs: string[]) => Promise<string[]>,
   maxDocChars: number,
+  options?: { targetLanguage?: string },
 ): Promise<RichText> {
   const probeBlock: RichBlock = { type: "paragraph", text: richText };
   if (measureBlockHtml(probeBlock) <= maxDocChars) {
@@ -636,6 +637,7 @@ async function translateRichTextChunked(
       { blocks: [probeBlock] },
       translateHtmlDocuments,
       maxDocChars,
+      options,
     );
     return extractRichTextFromBlocks(res.blocks, richText);
   }
@@ -695,7 +697,10 @@ async function translateRichTextChunked(
           const blocks = htmlToInputRichBlocks(
             translatedDocs[i],
             serializedPieces[pieceIdx].context,
-            { normalizeTranslatedWhitespace: true },
+            {
+              normalizeTranslatedWhitespace: true,
+              targetLanguage: options?.targetLanguage,
+            },
           );
           translatedMap.set(
             pieceIdx,
@@ -721,6 +726,7 @@ async function translateRichTextChunked(
           piece.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       );
       if (piece.separatorAfter) {
@@ -759,6 +765,7 @@ async function translateRichTextChunked(
             group,
             translateHtmlDocuments,
             maxDocChars,
+            options,
           ),
         );
       }
@@ -771,6 +778,7 @@ async function translateRichTextChunked(
       richText[0],
       translateHtmlDocuments,
       maxDocChars,
+      options,
     );
   }
 
@@ -797,6 +805,7 @@ async function translateRichTextChunked(
           richText.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "email_address":
@@ -812,6 +821,7 @@ async function translateRichTextChunked(
           richText.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "phone_number":
@@ -827,6 +837,7 @@ async function translateRichTextChunked(
           richText.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "button":
@@ -839,6 +850,7 @@ async function translateRichTextChunked(
               richText.button.text,
               translateHtmlDocuments,
               maxDocChars,
+              options,
             ),
           ),
         },
@@ -850,6 +862,7 @@ async function translateRichTextChunked(
           richText.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
   }
@@ -859,18 +872,21 @@ async function translateCaptionChunked(
   caption: RichBlockCaption | undefined,
   translateHtmlDocuments: (htmlDocs: string[]) => Promise<string[]>,
   maxDocChars: number,
+  options?: { targetLanguage?: string },
 ): Promise<RichBlockCaption | undefined> {
   if (!caption) return undefined;
   const text = await translateRichTextChunked(
     caption.text,
     translateHtmlDocuments,
     maxDocChars,
+    options,
   );
   const credit = caption.credit !== undefined
     ? await translateRichTextChunked(
       caption.credit,
       translateHtmlDocuments,
       maxDocChars,
+      options,
     )
     : undefined;
   return {
@@ -883,6 +899,7 @@ async function translateOversizedRichBlock(
   block: RichBlock,
   translateHtmlDocuments: (htmlDocs: string[]) => Promise<string[]>,
   maxDocChars: number,
+  options?: { targetLanguage?: string },
 ): Promise<InputRichBlock> {
   switch (block.type) {
     case "paragraph":
@@ -892,6 +909,7 @@ async function translateOversizedRichBlock(
           block.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "heading":
@@ -902,6 +920,7 @@ async function translateOversizedRichBlock(
           block.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "footer":
@@ -911,6 +930,7 @@ async function translateOversizedRichBlock(
           block.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "thinking":
@@ -920,6 +940,7 @@ async function translateOversizedRichBlock(
           block.text,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         ),
       };
     case "pullquote": {
@@ -927,12 +948,14 @@ async function translateOversizedRichBlock(
         block.text,
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       const credit = block.credit !== undefined
         ? await translateRichTextChunked(
           block.credit,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         )
         : undefined;
       return {
@@ -947,12 +970,14 @@ async function translateOversizedRichBlock(
         { blocks: block.blocks },
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       const credit = block.credit !== undefined
         ? await translateRichTextChunked(
           block.credit,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         )
         : undefined;
       return {
@@ -966,11 +991,13 @@ async function translateOversizedRichBlock(
         block.summary,
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       const inner = await translateRichMessageHtml(
         { blocks: block.blocks },
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       return {
         type: "details",
@@ -994,6 +1021,7 @@ async function translateOversizedRichBlock(
             { blocks: item.blocks },
             translateHtmlDocuments,
             maxDocChars,
+            options,
           );
           const itemBlocks = inner.blocks && inner.blocks.length > 0
             ? inner.blocks
@@ -1012,6 +1040,7 @@ async function translateOversizedRichBlock(
             { blocks: [{ type: "list", items: batch }] },
             translateHtmlDocuments,
             maxDocChars,
+            options,
           );
           const listItems = (res.blocks ?? []).flatMap((b) =>
             b.type === "list" ? b.items : []
@@ -1049,6 +1078,7 @@ async function translateOversizedRichBlock(
           block.caption,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         )
         : undefined;
       const translatedRows: RichBlockTableCell[][] = [];
@@ -1070,6 +1100,7 @@ async function translateOversizedRichBlock(
                     cell.text,
                     translateHtmlDocuments,
                     maxDocChars,
+                    options,
                   ),
                 }
                 : {}),
@@ -1081,6 +1112,7 @@ async function translateOversizedRichBlock(
             { blocks: [{ type: "table", cells: rowBatch }] },
             translateHtmlDocuments,
             maxDocChars,
+            options,
           );
           const tableRows = (res.blocks ?? []).flatMap((b) =>
             b.type === "table" ? b.cells : []
@@ -1123,6 +1155,7 @@ async function translateOversizedRichBlock(
         { blocks: block.blocks },
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       const translatedChildren = (inner.blocks ?? []).filter(
         isGalleryMediaBlock,
@@ -1134,6 +1167,7 @@ async function translateOversizedRichBlock(
         block.caption,
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       return {
         type: block.type,
@@ -1158,6 +1192,7 @@ async function translateOversizedRichBlock(
           block.caption,
           translateHtmlDocuments,
           maxDocChars,
+          options,
         );
         return { ...base, ...(caption ? { caption } : {}) };
       }
@@ -1173,6 +1208,7 @@ async function translateOversizedRichBlock(
               button.text,
               translateHtmlDocuments,
               maxDocChars,
+              options,
             ),
           ),
         });
@@ -1198,6 +1234,7 @@ export async function translateRichMessageHtml(
   richMessage: RichMessage,
   translateHtmlDocuments: (htmlDocs: string[]) => Promise<string[]>,
   maxDocChars = MAX_TRANSLATE_HTML_DOC_CHARS,
+  options?: { targetLanguage?: string },
 ): Promise<InputRichMessage> {
   const { documents, context } = richMessageToTranslatableHtmlDocuments(
     richMessage,
@@ -1244,6 +1281,7 @@ export async function translateRichMessageHtml(
         richMessage.blocks[doc.oversizedBlockIndex],
         translateHtmlDocuments,
         maxDocChars,
+        options,
       );
       allBlocks.push(translatedBlock);
     } else {
@@ -1253,6 +1291,7 @@ export async function translateRichMessageHtml(
         context,
         {
           normalizeTranslatedWhitespace: true,
+          targetLanguage: options?.targetLanguage,
         },
       );
       if (parsed.length > 0) {

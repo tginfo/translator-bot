@@ -14,6 +14,7 @@ import {
   isBareUrlText,
   isElement,
   isTextNode,
+  normalizeTranslatedDomWhitespace,
   parseSafeInt,
   sanitizeDateTimeFormat,
 } from "./html_common.ts";
@@ -50,10 +51,17 @@ export interface TextWithEntities {
 
 export interface HtmlToEntitiesOptions {
   /**
-   * When true, strips single spaces/tabs that translation APIs commonly inject
-   * directly around `<br>` tags. Keep false for lossless Telegram HTML round-trips.
+   * When true, strips spurious horizontal spaces that translation APIs commonly
+   * inject around `<br>` tags and inside or around inline HTML tags (such as
+   * hyperlinks). Keep false for lossless Telegram HTML round-trips.
    */
   normalizeTranslatedWhitespace?: boolean;
+  /**
+   * Optional BCP-47 target language code used for language-aware punctuation
+   * whitespace rules (e.g. preserving French spacing inside `« »` and before
+   * `: ; ! ?`).
+   */
+  targetLanguage?: string;
 }
 
 export function createEntityHtmlContext(): EntityHtmlContext {
@@ -886,6 +894,25 @@ export function htmlToTextAndEntities(
   const normalizeWs = options?.normalizeTranslatedWhitespace ?? false;
   const fragment = parseFragment(html);
 
+  const getLeafId = (el: Element): string | undefined => {
+    const dataLeafId = getAttr(el, "data-tg-leaf");
+    if (dataLeafId) return dataLeafId;
+    const htmlId = getAttr(el, "id");
+    return htmlId?.startsWith("tg-leaf-")
+      ? htmlId.slice("tg-leaf-".length)
+      : undefined;
+  };
+
+  if (normalizeWs) {
+    normalizeTranslatedDomWhitespace(fragment.childNodes, {
+      targetLanguage: options?.targetLanguage,
+      getPreservedText: (el) => {
+        const leafId = getLeafId(el);
+        return leafId ? ctx.preservedLeaves.get(leafId)?.text : undefined;
+      },
+    });
+  }
+
   const textParts: string[] = [];
   let offset = 0;
   const entities: MessageEntity[] = [];
@@ -924,17 +951,7 @@ export function htmlToTextAndEntities(
       const node = nodes[i];
 
       if (isTextNode(node)) {
-        let val = node.value;
-        if (normalizeWs) {
-          const prev = nodes[i - 1];
-          const next = nodes[i + 1];
-          if (prev && isElement(prev) && prev.tagName.toLowerCase() === "br") {
-            val = val.replace(/^[ \t]/, "");
-          }
-          if (next && isElement(next) && next.tagName.toLowerCase() === "br") {
-            val = val.replace(/[ \t]+$/, "");
-          }
-        }
+        const val = node.value;
         if (val.length > 0) {
           flushBlockBreak(val);
           appendRaw(val);
@@ -944,12 +961,7 @@ export function htmlToTextAndEntities(
 
       if (!isElement(node)) continue;
 
-      const dataLeafId = getAttr(node, "data-tg-leaf");
-      const htmlId = getAttr(node, "id");
-      const leafId = dataLeafId ??
-        (htmlId?.startsWith("tg-leaf-")
-          ? htmlId.slice("tg-leaf-".length)
-          : undefined);
+      const leafId = getLeafId(node);
       if (leafId && ctx.preservedLeaves.has(leafId)) {
         const preserved = ctx.preservedLeaves.get(leafId)!;
         flushBlockBreak(preserved.text);
@@ -1263,6 +1275,7 @@ export async function translateTextAndEntitiesHtml(
   entities: readonly MessageEntity[] | undefined,
   translateHtml: (html: string) => Promise<string>,
   maxHtmlChars = DEFAULT_MAX_TRANSLATE_HTML_CHARS,
+  options?: { targetLanguage?: string },
 ): Promise<TextWithEntities> {
   const sourceEntities = entities ?? [];
   const { html, context, hasTranslatableText } = entitiesToHtml(
@@ -1321,12 +1334,14 @@ export async function translateTextAndEntitiesHtml(
           leftEntities,
           translateHtml,
           maxHtmlChars,
+          options,
         );
         const translatedRight = await translateTextAndEntitiesHtml(
           rightText,
           rightEntities,
           translateHtml,
           maxHtmlChars,
+          options,
         );
 
         const combinedText = translatedLeft.text + sepText +
@@ -1400,6 +1415,7 @@ export async function translateTextAndEntitiesHtml(
   const translatedHtml = await translateHtml(html);
   return htmlToTextAndEntities(translatedHtml, context, {
     normalizeTranslatedWhitespace: true,
+    targetLanguage: options?.targetLanguage,
   });
 }
 

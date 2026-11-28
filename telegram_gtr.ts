@@ -59,6 +59,8 @@ export class TelegramGTR {
         }
         return content;
       },
+      undefined,
+      { targetLanguage },
     );
 
     return {
@@ -102,15 +104,21 @@ export class TelegramGTR {
     richMessage: RichMessage,
     opts: TranslateOptions & { requestUser: TranslatorInfo },
   ): Promise<InputRichMessage> {
+    const targetLanguage = opts.targetLang || "en";
     const session = createCloudTranslateSession(opts.requestUser);
-    return translateRichMessageHtml(richMessage, async (htmlDocs) => {
-      const res = await session.translateBatch({
-        contents: htmlDocs,
-        sourceLanguage: opts.sourceLang,
-        targetLanguage: opts.targetLang || "en",
-        mimeType: "text/html",
-      });
-      return res.contents;
-    });
+    return translateRichMessageHtml(
+      richMessage,
+      async (htmlDocs) => {
+        const res = await session.translateBatch({
+          contents: htmlDocs,
+          sourceLanguage: opts.sourceLang,
+          targetLanguage,
+          mimeType: "text/html",
+        });
+        return res.contents;
+      },
+      undefined,
+      { targetLanguage },
+    );
   }
 }

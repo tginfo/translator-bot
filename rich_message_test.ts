@@ -1844,3 +1844,48 @@ Deno.test("translateRichMessageHtml falls back per chunk when one chunk returns 
     { type: "paragraph", text: "Chunk two ".repeat(20).trim() },
   ]);
 });
+
+Deno.test("translateRichMessageHtml strips spurious spaces inside and around hyperlinks", async () => {
+  const url = "https://t.me/tginfo";
+  const rm: RichMessage = {
+    blocks: [
+      {
+        type: "paragraph",
+        text: [
+          "Check (",
+          { type: "url", url, text: "this link" },
+          ") and ",
+          { type: "url", url, text: "https://t.me/tginfo" },
+          ".",
+        ],
+      },
+    ],
+  };
+
+  const translated = await translateRichMessageHtml(
+    rm,
+    (docs) =>
+      Promise.resolve(
+        docs.map((d) =>
+          d
+            .replace("Check (", "Проверьте ( ")
+            .replace("this link", " эту ссылку ")
+            .replace(") and ", " ) и  ")
+            .replace("</a>.", "</a> .")
+        ),
+      ),
+  );
+
+  assertEquals(translated.blocks, [
+    {
+      type: "paragraph",
+      text: [
+        "Проверьте (",
+        { type: "url", url, text: "эту ссылку" },
+        ") и ",
+        { type: "url", url, text: "https://t.me/tginfo" },
+        ".",
+      ],
+    },
+  ]);
+});

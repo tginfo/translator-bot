@@ -764,3 +764,211 @@ Deno.test("translateTextAndEntitiesHtml stops splitting when spanning entity ove
     entities: [{ type: "text_link", url, offset: 0, length: 13 }],
   });
 });
+
+Deno.test("translateTextAndEntitiesHtml strips spurious spaces inside and around hyperlinks", async () => {
+  const url = "https://t.me/tginfo";
+  const url2 = "https://t.me/betainfo";
+
+  // 1. Spaces injected inside <a> (previously caused double spaces & space before punctuation)
+  {
+    const text = "Check this link and more.";
+    const entities: MessageEntity[] = [
+      { type: "text_link", url, offset: 6, length: 9 },
+    ];
+    const res = await translateTextAndEntitiesHtml(
+      text,
+      entities,
+      (html) =>
+        Promise.resolve(
+          html
+            .replace("Check ", "Проверьте ")
+            .replace("this link", " эту ссылку ")
+            .replace(" and more.", " и другое."),
+        ),
+    );
+    assertEquals(res, {
+      text: "Проверьте эту ссылку и другое.",
+      entities: [{ type: "text_link", url, offset: 10, length: 10 }],
+    });
+  }
+
+  // 2. Spaces injected outside <a> (double spaces, parentheses, quotes, punctuation)
+  {
+    const text = 'Read (here), «Telegram», and "Beta".';
+    const entities: MessageEntity[] = [
+      { type: "text_link", url, offset: 6, length: 4 },
+      { type: "text_link", url, offset: 14, length: 8 },
+      { type: "text_link", url: url2, offset: 30, length: 4 },
+    ];
+    const res = await translateTextAndEntitiesHtml(
+      text,
+      entities,
+      () =>
+        Promise.resolve(
+          `Читайте ( <a href="${url}"> здесь </a> ), « <a href="${url}">Telegram</a> », и " <a href="${url2}">Beta</a> ".`,
+        ),
+    );
+    assertEquals(res.text, 'Читайте (здесь), «Telegram», и "Beta".');
+    assertEquals(res.entities, [
+      { type: "text_link", url, offset: 9, length: 5 },
+      { type: "text_link", url, offset: 18, length: 8 },
+      { type: "text_link", url: url2, offset: 32, length: 4 },
+    ]);
+  }
+
+  // 2b. Spaces injected between </a> and following punctuation (comma, period, colon)
+  {
+    const text = "See Alpha, Beta: Gamma.";
+    const entities: MessageEntity[] = [
+      { type: "text_link", url, offset: 4, length: 5 },
+      { type: "text_link", url: url2, offset: 11, length: 4 },
+      { type: "text_link", url, offset: 17, length: 5 },
+    ];
+    const res = await translateTextAndEntitiesHtml(
+      text,
+      entities,
+      () =>
+        Promise.resolve(
+          `См.  <a href="${url}">Альфа</a> ,  <a href="${url2}">Бета</a> :  <a href="${url}">Гамма</a> .`,
+        ),
+    );
+    assertEquals(res.text, "См. Альфа, Бета: Гамма.");
+    assertEquals(res.entities, [
+      { type: "text_link", url, offset: 4, length: 5 },
+      { type: "text_link", url: url2, offset: 11, length: 4 },
+      { type: "text_link", url, offset: 17, length: 5 },
+    ]);
+  }
+
+  // 3. Preserved bare URLs (url entity and bare text_link) with spaces added around notranslate tags
+  {
+    const text = "Visit (https://t.me/tginfo) or t.me/betainfo.";
+    const entities: MessageEntity[] = [
+      { type: "url", offset: 7, length: 19 },
+      { type: "text_link", url: url2, offset: 31, length: 13 },
+    ];
+    const res = await translateTextAndEntitiesHtml(
+      text,
+      entities,
+      (html) =>
+        Promise.resolve(
+          html
+            .replace("Visit (", "Посетите ( ")
+            .replace(") or ", " ) или  ")
+            .replace("</a>.", "</a> ."),
+        ),
+    );
+    assertEquals(res.text, "Посетите (https://t.me/tginfo) или t.me/betainfo.");
+    assertEquals(res.entities, [
+      { type: "text_link", url: url2, offset: 35, length: 13 },
+    ]);
+  }
+
+  // 4. Nested formatting, message edges, and <br> boundaries
+  {
+    const text = "Link\nNext";
+    const entities: MessageEntity[] = [
+      { type: "bold", offset: 0, length: 4 },
+      { type: "text_link", url, offset: 0, length: 4 },
+    ];
+    const res = await translateTextAndEntitiesHtml(
+      text,
+      entities,
+      () =>
+        Promise.resolve(
+          ` <b> <a href="${url}"> Ссылка </a> </b> <br> Далее`,
+        ),
+    );
+    assertEquals(res, {
+      text: "Ссылка\nДалее",
+      entities: [
+        { type: "text_link", url, offset: 0, length: 6 },
+        { type: "bold", offset: 0, length: 6 },
+      ],
+    });
+  }
+
+  // 5. Contractions/possessives and slash-attached links
+  {
+    const text = "Read Telegram's blog or check this/that.";
+    const entities: MessageEntity[] = [
+      { type: "text_link", url, offset: 5, length: 8 },
+      { type: "text_link", url: url2, offset: 30, length: 4 },
+    ];
+    const res = await translateTextAndEntitiesHtml(
+      text,
+      entities,
+      () =>
+        Promise.resolve(
+          `Read <a href="${url}">Telegram</a> 's blog or check <b><a href="${url2}"> this </a>/that</b>.`,
+        ),
+    );
+    assertEquals(res.text, "Read Telegram's blog or check this/that.");
+    assertEquals(res.entities, [
+      { type: "text_link", url, offset: 5, length: 8 },
+      { type: "bold", offset: 30, length: 9 },
+      { type: "text_link", url: url2, offset: 30, length: 4 },
+    ]);
+  }
+});
+
+Deno.test("htmlToTextAndEntities preserves legitimate spaces around hyperlinks and respects targetLanguage", () => {
+  const url = "https://example.com";
+
+  // Word-separating spaces moved inside <a> must NOT glue words together.
+  assertEquals(
+    htmlToTextAndEntities(`Check<a href="${url}"> this link </a>now`, undefined, {
+      normalizeTranslatedWhitespace: true,
+    }),
+    {
+      text: "Check this link now",
+      entities: [{ type: "text_link", url, offset: 6, length: 9 }],
+    },
+  );
+
+  // Quotes that close before / open after a link and dot-prefixed tokens (.NET) stay spaced.
+  assertEquals(
+    htmlToTextAndEntities(
+      `He said "hi" <a href="${url}">here</a> "guide" and <b>hello</b>" <a href="${url}">Microsoft</a> .NET`,
+      undefined,
+      { normalizeTranslatedWhitespace: true },
+    ).text,
+    `He said "hi" here "guide" and hello" Microsoft .NET`,
+  );
+
+  // Straight quotes wrapping a link mid-sentence vs opening a following bold quote.
+  assertEquals(
+    htmlToTextAndEntities(
+      `He said " <a href="${url}">hello</a> " today and read <a href="${url}">this</a> " <b>guide</b>"`,
+      undefined,
+      { normalizeTranslatedWhitespace: true },
+    ).text,
+    `He said "hello" today and read this "guide"`,
+  );
+
+  // CJK-to-CJK spaces around links are stripped while CJK-to-Latin spaces stay.
+  assertEquals(
+    htmlToTextAndEntities(
+      `今天访问 <a href="${url}">我们的频道</a> 吧，或者 <a href="${url}">Telegram</a> 频道。`,
+      undefined,
+      { normalizeTranslatedWhitespace: true },
+    ).text,
+    "今天访问我们的频道吧，或者 Telegram 频道。",
+  );
+
+  // French preserves spaces inside guillemets and before ! ? : ; while still fixing () / . / double spaces.
+  assertEquals(
+    htmlToTextAndEntities(
+      `Voir « <a href="${url}">Telegram</a> » ( <a href="${url}"> ici </a> )  <a href="${url}">maintenant</a> !`,
+      undefined,
+      { normalizeTranslatedWhitespace: true, targetLanguage: "fr" },
+    ).text,
+    "Voir « Telegram » (ici) maintenant !",
+  );
+
+  // Lossless mode (normalizeTranslatedWhitespace: false) leaves spaces untouched.
+  assertEquals(
+    htmlToTextAndEntities(`( <a href="${url}"> link </a> )`).text,
+    "(  link  )",
+  );
+});
